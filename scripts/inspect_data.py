@@ -58,14 +58,19 @@ def identifier_maps(entrez_values, symbols):
     return by_entrez, by_symbol
 
 
-def inspect(export, raw_dir=RAW_DIR):
+def load_export(export, raw_dir=RAW_DIR):
     path = raw_dir / export.archive
     url, member = SOURCES[export.archive]
     metadata = verify_archive(path, url)
     with ZipFile(path) as archive:
         members = archive.namelist()
         with TextIOWrapper(archive.open(member), encoding="utf-8", newline="") as stream:
-            columns, rows, blank_lines = read_table(stream, export.delimiter)
+            return metadata, members, read_table(stream, export.delimiter)
+
+
+def inspect(export, raw_dir=RAW_DIR):
+    _, member = SOURCES[export.archive]
+    metadata, members, (columns, rows, blank_lines) = load_export(export, raw_dir)
     values = {name: [row[index] for row in rows] for index, name in enumerate(columns)}
     if missing := set(export.identifiers) - values.keys():
         raise ValueError(f"Expected identifier columns missing in {member}: {sorted(missing)}")

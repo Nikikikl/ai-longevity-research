@@ -1,0 +1,19 @@
+{
+  "hgnc_complete_set_2026-10-06.tsv": {
+    "source_url": "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/quarterly/tsv/hgnc_complete_set_2026-10-06.tsv",
+    "retrieved_at_utc": "2026-11-07T23:36:05Z",
+    "last_modified_utc": "2026-10-06T13:38:26+00:00",
+    "version": "Quarterly complete set, 2026-10-06",
+    "size_bytes": 16973125,
+    "sha256": "8bf6f686e640dbc864a346484626953621b0500d900d26cd085a35c2782d725d",
+    "object_generation": "1791293906485185"
+  },
+  "Homo_sapiens.gene_info.gz": {
+    "source_url": "https://ftp.ncbi.nlm.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz",
+    "retrieved_at_utc": "2026-11-07T23:36:07Z",
+    "last_modified_utc": "2026-11-07T08:31:40+00:00",
+    "version": "NCBI Gene daily export, HTTP Last-Modified 2026-11-07T08:31:40Z",
+    "size_bytes": 5200612,
+    "sha256": "69d0f9f7dcbec4a39596ea3944fb1544ffcef9a872c6cf70a4882327d9db4e6e"
+  }
+}

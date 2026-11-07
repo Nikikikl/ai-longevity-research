@@ -27,7 +27,7 @@ python3 -B -m unittest discover -s tests -v
 
 The downloader saves the original ZIP files under `data/raw/` and records the requested and final URLs, UTC download time, size, and SHA-256 in a JSON file beside each archive. It checks ZIP integrity and verifies existing archives without overwriting them. If only a JSON record is present, the downloader restores the archive only if its bytes match the recorded snapshot. If a download no longer matches, retain the recorded metadata and request the matching export from HAGR or use a retained copy with the recorded checksum.
 
-The inspector verifies the fingerprints, reads the tables directly from the ZIPs, and regenerates [reports/data_inventory.md](reports/data_inventory.md). Keep the JSON provenance records with the report. Git ignores raw ZIPs and future derived datasets. The `data/processed/` directory is reserved for subsequent analysis.
+The inspector verifies the fingerprints, reads the tables directly from the ZIPs, and regenerates [reports/data_inventory.md](reports/data_inventory.md). Keep the JSON provenance records with the report. Git ignores raw ZIPs and generated datasets.
 
 ### Manual download
 
@@ -39,3 +39,16 @@ python3 -B -m scripts.inspect_data
 ```
 
 Manual registration records when the local files were registered. With existing provenance records it checks the archived bytes against the recorded checksums. If both download methods fail, leave the archives absent and record the failure before continuing.
+
+## Reproduce the gene identifier audit
+
+Obtain the two files listed in [data/reference_provenance.json](data/reference_provenance.json) from their official URLs and save them under `data/raw/references/` using the filenames in the manifest. Keep exact copies of the downloaded files. The NCBI URL is updated in place, so reproducing this audit later may require the retained original rather than a fresh download. The script rejects either reference if its SHA-256 or size differs from the manifest.
+
+```sh
+python3 -B -m scripts.download_data
+python3 -B -m scripts.harmonize_genes
+python3 -B -m scripts.harmonize_genes --check
+python3 -B -m unittest discover -s tests -v
+```
+
+The script writes [reports/gene_identifier_audit.md](reports/gene_identifier_audit.md) and the local `data/processed/gene_mapping.csv`. Only confirmed mappings populate the approved HGNC fields. Each mapping carries the original source identifier, symbol, and record ordinals. The original archives retain the experimental details for all referenced rows. Git ignores the raw references and the generated CSV.
