@@ -1,0 +1,41 @@
+# AI & Longevity: Exploring Genes Associated with Human Aging
+
+> Which human genes are represented in both the GenAge Human and CellAge databases, and which biological processes are associated with these genes?
+
+This independent computational biology project starts with two curated Human Ageing Genomic Resources (HAGR) exports. GenAge Human assembles candidate genes for human aging, drawing on human and model-organism evidence. CellAge records evidence from gene manipulations in human cells and focuses on cellular senescence. The initial milestone acquires the files and audits their structure and identifiers. The [research plan](docs/research_plan.md) describes the later gene intersection and functional annotation. Machine learning and functional enrichment are outside the initial milestone.
+
+## Official inputs
+
+| Export | Direct download | Archive contents | Release notes |
+| --- | --- | --- | --- |
+| GenAge Human Genes | [human_genes.zip](https://genomics.senescence.info/genes/human_genes.zip) | Comma-delimited `genage_human.csv` and `release.html` | [Build 21, 2023-08-28](https://genomics.senescence.info/genes/release.html) |
+| CellAge gene manipulations | [cellAge.zip](https://genomics.senescence.info/cells/cellAge.zip) | Tab-delimited `cellage3.tsv` and `release.html` | [Build 3, 2023-04-23](https://genomics.senescence.info/cells/release.html) |
+
+The actual archives determine the parsing formats. The [HAGR download index](https://genomics.senescence.info/download.html) describes different delimiters and links to a separate CellAge expression-signature export, which is outside this study. Both URLs point to the current stable downloads. The build labels above were checked against the release notes bundled in the acquired archives. The SHA-256 records identify the exact snapshots even if the URLs later serve different files.
+
+HAGR requires attribution under its published terms and asks users to contact the maintainers before making many queries or retrieving large volumes. Cite de Magalhães et al. (2024) for HAGR and Avelar et al. (2020) for CellAge as listed in the [HAGR terms and citation guidance](https://genomics.senescence.info/legal.html). See the GenAge release notes for the GenAge-specific citation.
+
+## Reproduce the inventory
+
+Run from the repository root with Python 3.11 or newer. The scripts and tests use only the standard library, so no package installation or virtual environment is required.
+
+```sh
+python3 -B -m scripts.download_data
+python3 -B -m scripts.inspect_data
+python3 -B -m unittest discover -s tests -v
+```
+
+The downloader saves the original ZIP files under `data/raw/` and records the requested and final URLs, UTC download time, size, and SHA-256 in a JSON file beside each archive. It checks ZIP integrity and verifies existing archives without overwriting them. If only a JSON record is present, the downloader restores the archive only if its bytes match the recorded snapshot. If a download no longer matches, retain the recorded metadata and request the matching export from HAGR or use a retained copy with the recorded checksum.
+
+The inspector verifies the fingerprints, reads the tables directly from the ZIPs, and regenerates [reports/data_inventory.md](reports/data_inventory.md). Keep the JSON provenance records with the report. Git ignores raw ZIPs and future derived datasets. The `data/processed/` directory is reserved for subsequent analysis.
+
+### Manual download
+
+If HTTPS fails in a portable Python installation, point `SSL_CERT_FILE` to a trusted local CA bundle. On this macOS setup, `SSL_CERT_FILE=/etc/ssl/cert.pem` worked. If the downloader remains blocked, open the official download links above in a browser, save the original ZIPs under `data/raw/` using the exact filenames and case, then run:
+
+```sh
+python3 -B -m scripts.download_data --register-local
+python3 -B -m scripts.inspect_data
+```
+
+Manual registration records when the local files were registered. With existing provenance records it checks the archived bytes against the recorded checksums. If both download methods fail, leave the archives absent and record the failure before continuing.

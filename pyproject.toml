@@ -1,0 +1,7 @@
+[project]
+name = "ai-longevity-research"
+version = "0.1.0"
+description = "Reproducible inspection of the HAGR GenAge Human and CellAge exports"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []

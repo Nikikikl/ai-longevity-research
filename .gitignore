@@ -1,0 +1,24 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# Dataset bytes and derived data
+/data/raw/*
+!/data/raw/*.zip.json
+/data/processed/*
+!/data/processed/.gitkeep
+
+# Local credentials and temporary files
+.env
+.env.*
+*.pem
+*.key
+*.tmp
+*.part
+.DS_Store
