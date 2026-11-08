@@ -8,6 +8,8 @@
 
 **Experimental v2.0 · Phase 7C** tests the frozen lookup and a terminology normalizer on 24 held-out prompts. Exact answers rose from 5/24 to 18/24. The comparison covers new wording over the existing three-gene audit. [Evaluation protocol](docs/phase7c_evaluation_protocol.md), [results](reports/phase7c_results.md)
 
+**Experimental v2.0 · Phase 7D** adds a focused evidence audit of FOXO3 and SIRT6. It traces the curated claims to cell, genotype and mouse studies and compares their endpoints with Phase 7A. [Case studies](reports/phase7d_case_studies.md) · [Ledger and lookup](reports/phase7b_evidence_audit.md#phase-7d-extension)
+
 > Which human genes are represented in both the GenAge Human and CellAge databases, and which biological processes are associated with these genes?
 
 This independent reproducible reanalysis and evidence review compares two Human Ageing Genomic Resources (HAGR) exports. GenAge Human curates candidates for human aging and can draw on model-organism evidence. CellAge curates perturbation experiments on cellular senescence in human cells. Comparing them shows where these kinds of evidence overlap and lets readers trace selected records to the underlying experiments.

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "D01", "question": "cellage 2309", "status": "answered", "evidence_type": "database_record",
+    "facts": {"gene": "FOXO3", "records": [{"record": 296, "effect": "Inhibits", "cancer_cell": "No", "type": "Unclear", "pmid": "15741276"}]},
+    "references": ["CellAge:296"],
+    "reference_answer": "The sole FOXO3 row in the Build 3 TSV is data ordinal 296. It classifies the effect as Inhibits, cancer cell No, and the subtype as Unclear. Kim et al. used FOXO3 depletion, not activation."
+  },
+  {
+    "id": "D02", "question": "record CellAge:765", "status": "answered", "evidence_type": "cellage_perturbation_record",
+    "facts": {"record_id": "CellAge:765", "gene": "SIRT6", "source": "CellAge", "claim": "Inhibits senescence (CellAge type: Replicative)", "pmid": "25819580", "review_depth": "Abstract and thesis methods/results summary"},
+    "references": ["CellAge:765", "PMID:25819580"],
+    "reference_answer": "The original row labels SIRT6 Inhibits, Replicative and cancer cell No. Nagai's article abstract and doctoral summary report acute siRNA depletion with increased senescence markers. The methods summary dates SA-β-gal to 48 hours. Serial-passage exhaustion is unestablished."
+  },
+  {
+    "id": "D03", "question": "record GAF:591445", "status": "answered", "evidence_type": "go_annotation",
+    "facts": {"record_id": "GAF:591445", "gene": "SIRT6", "source": "GO", "claim": "involved_in GO:0008340 (determination of adult lifespan)", "pmid": "25541994", "review_depth": "Full text"},
+    "references": ["GAF:591445", "PMID:25541994"],
+    "reference_answer": "The GAF labels this IMP. TenNapel Methods and Table 2 compare adjusted mean age at death by naturally occurring rs107251 genotype. The association is not a SIRT6 manipulation or causal phenotype."
+  },
+  {
+    "id": "D04", "question": "record GAF:591460", "status": "answered", "evidence_type": "go_annotation",
+    "facts": {"record_id": "GAF:591460", "gene": "SIRT6", "source": "GO", "claim": "involved_in GO:0032206 (positive regulation of telomere maintenance)", "pmid": "25819580", "review_depth": "Abstract and thesis methods/results summary"},
+    "references": ["GAF:591460", "PMID:25819580"],
+    "reference_answer": "The original IMP annotation cites Nagai. The investigators counted telomere dysfunction-induced foci after SIRT6 siRNA, which reports damage at telomeres. That measurement does not establish maintenance of telomere length."
+  },
+  {
+    "id": "D05", "question": "pmid 25819580", "status": "answered", "evidence_type": "citation_audit",
+    "facts": {"pmid": "25819580", "rows": 3, "genes": ["SIRT6"], "sources": ["CellAge", "GO"]},
+    "references": ["CellAge:765", "GAF:591460", "GAF:591502", "PMID:25819580"],
+    "reference_answer": "The CellAge TSV and pinned GAF cite one Nagai study for three distinct claims. The relevant endpoints are senescence markers, telomere damage foci and a proliferation readout."
+  },
+  {
+    "id": "D06", "question": "pmid 29474172", "status": "answered", "evidence_type": "citation_audit",
+    "facts": {"pmid": "29474172", "rows": 2, "genes": ["SIRT6", "TP53"], "sources": ["GO"]},
+    "references": ["GAF:133834", "GAF:591513", "PMID:29474172"],
+    "reference_answer": "These two selected GAF rows cite the same Ghosh paper in the expanded ledger. Figure 1 compares markers in mouse embryonic fibroblasts and Figure 2 measures mouse survival. The counts are limited to the selected rows."
+  },
+  {
+    "id": "D07", "question": "association 2309", "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"gene": "FOXO3", "discovery_status": "eligible", "validation_status": "eligible", "discovery_r": 0.159, "validation_r": -0.079},
+    "references": ["P7A:gene:2309", "P7A:association"],
+    "reference_answer": "Entrez 2309 is eligible in both cohorts. Discovery and validation partial r round to +0.159 and −0.079. The coefficients concern donor age and RNA expression."
+  },
+  {
+    "id": "D08", "question": "association SIRT6", "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"gene": "SIRT6", "discovery_status": "eligible", "validation_status": "eligible", "discovery_r": -0.307, "validation_r": -0.075},
+    "references": ["P7A:gene:51548", "P7A:association"],
+    "reference_answer": "Entrez 51548 is eligible in both cohorts. Discovery and validation partial r round to −0.307 and −0.075. Only discovery passed the within-cohort q threshold."
+  },
+  {
+    "id": "D09", "question": "record GenAge:123", "status": "answered", "evidence_type": "genage_membership",
+    "facts": {"record_id": "GenAge:123", "gene": "FOXO3", "source": "GenAge", "claim": "GenAge inclusion (why=model,human_link)", "pmid": null, "review_depth": "Archive record"},
+    "references": ["GenAge:123"],
+    "reference_answer": "Build 21 ordinal 122 has explicit GenAge ID 123 and why=model,human_link. The archived CSV has no paper reference for this row."
+  },
+  {
+    "id": "D10", "question": "record GAF:591459", "status": "insufficient_evidence", "evidence_type": "scope_assessment",
+    "facts": {"record_id": "GAF:591459"},
+    "references": ["P7D:audit"],
+    "reference_answer": "GAF 591459 exists in the Phase 4 table and cites PMID 23201774. It is outside the selected Phase 7D rows. Its absence from this lookup is not absence from GO."
+  }
+]

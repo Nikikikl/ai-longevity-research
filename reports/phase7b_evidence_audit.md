@@ -31,3 +31,26 @@ python3 -B -m scripts.phase7b_ledger --check --check-raw --metrics data/processe
 ```
 
 The generator checks original CellAge ordinals against the shared gene table and matches GO evidence to the Phase 4 CSV. The optional raw check verifies file fingerprints, original CellAge fields and the original GAF line contents. `python3 -B -m scripts.annotate_go --check` independently checks the Phase 4 rebuild. The ledger reuses the existing HAGR and GO snapshots under their [source terms and attribution](../README.md#source-attribution-and-reuse). No articles or raw archives were added. The ledger is a derived index of reviewed results, not a count of independent studies.
+
+## Phase 7D extension
+
+The [extension ledger](phase7d_evidence_ledger.csv) adds eight source rows for FOXO3 and SIRT6. It includes both original CellAge records, two archived GenAge membership rows and four selected GO annotations. The GenAge export carries inclusion categories without PMIDs. The [focused case studies](phase7d_case_studies.md) give the primary studies, review depth, exact source records and comparison with Phase 7A.
+
+Together the two ledgers index 81 rows (9 CellAge, 70 GO and 2 GenAge). The 66 publication-linked rows cite 46 distinct PMIDs. Thirteen PMIDs recur across 33 rows. The Phase 7B ledger retains its original citation counts. Extension counts and Phase 7D PMID lookups use both tables.
+
+- Nagai (PMID 25819580) appears in CellAge 765 and GAF 591460 and 591502. The rows concern senescence, telomere integrity and proliferation in one chondrocyte study. The reviewed methods support short-term phenotypes and leave the `Replicative` subtype unestablished. [Nagai et al.](https://pubmed.ncbi.nlm.nih.gov/25819580/) · [Methods and results summary](https://da.lib.kobe-u.ac.jp/da/kernel/D1006529/D1006529yy.pdf)
+- Ghosh (PMID 29474172) links TP53 GAF 133834 to SIRT6 GAF 591513 in the selected rows. This reuse crosses genes and includes common mouse fibroblast comparisons. [Ghosh et al.](https://elifesciences.org/articles/32127)
+- TenNapel (PMID 25541994) supports a genotype association with age at death for GAF 591445. This is an observational basis for the lifespan claim. [TenNapel et al.](https://doi.org/10.1371/journal.pone.0115616)
+
+The expansion separates curated claims from the measurements behind them. Its lookup accepts structured commands for the selected records and reuses the Phase 7A association results. Ten new [development checks](../benchmarks/phase7d_questions.json) matched the expected answers, exact citations and evidence types (10/10 each), including one correctly scoped abstention. The questions and references were prepared from original sources before implementing the lookup. The score checks the command interface against the reviewed data. Phase 7C remains the evaluation of unfamiliar natural-language wording.
+
+```sh
+python3 -B -m scripts.phase7d_evidence --check
+python3 -B -m scripts.phase7d_evidence --check-raw
+python3 -B -m scripts.phase7d_evidence 'record GAF:591445'
+python3 -B -m scripts.phase7d_evidence 'pmid 25819580'
+python3 -B -m scripts.phase7d_evidence 'association SIRT6'
+python3 -B -m scripts.phase7d_evidence --score
+```
+
+`--check-raw` additionally verifies both HAGR archive fingerprints, original rows and the selected GAF lines. Lookup and scoring run using tracked files. The [existing attribution](../README.md#source-attribution-and-reuse) applies to the derived records.
