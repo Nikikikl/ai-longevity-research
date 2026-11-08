@@ -1,0 +1,19 @@
+{
+  "source": "reports/phase7_baseline_results.md",
+  "protocol_sha256": "b6648a56607a9743a0fba4012826c6316151648d99c79ef2d6bd2d895a8ca702",
+  "donors": {
+    "discovery": 97,
+    "validation": 82
+  },
+  "replication": {
+    "target": 0.00464,
+    "matched_median": 0.00685,
+    "permutation_p": 0.2889,
+    "decision_met": false
+  },
+  "prediction": {
+    "ridge_mae": 15.34,
+    "median_age_mae": 20.38,
+    "matched_median_mae": 15.03
+  }
+}

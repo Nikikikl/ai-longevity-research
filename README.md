@@ -4,6 +4,8 @@
 
 **Experimental v2.0 · Phase 7A** evaluates fibroblast RNA-seq in two cohorts. Of the 113 shared genes, 109 could be tested in both. Their cross-cohort signal did not exceed the matched control benchmark. Ridge predicted chronological age better than constant predictions within discovery, with errors comparable to expression-matched random panels. [Frozen protocol](docs/phase7_research_protocol.md), [data and prior work](reports/phase7_data_feasibility.md), [baseline results](reports/phase7_baseline_results.md)
 
+**Experimental v2.0 · Phase 7B** adds an evidence integrity ledger and a small deterministic Q&A benchmark. The manual audit covers TP53, CDKN2A and TERT. The lookup distinguishes database rows, cited experiments and missing outcomes. [Protocol](docs/phase7b_evidence_protocol.md), [audit](reports/phase7b_evidence_audit.md), [benchmark results](reports/phase7b_benchmark_results.md)
+
 > Which human genes are represented in both the GenAge Human and CellAge databases, and which biological processes are associated with these genes?
 
 This independent reproducible reanalysis and evidence review compares two Human Ageing Genomic Resources (HAGR) exports. GenAge Human curates candidates for human aging and can draw on model-organism evidence. CellAge curates perturbation experiments on cellular senescence in human cells. Comparing them shows where these kinds of evidence overlap and lets readers trace selected records to the underlying experiments.
@@ -36,6 +38,18 @@ The workflow verifies the input checksums, validates NCBI Gene IDs and HGNC mapp
 Bonnefous et al. (2024) previously reported 113 shared genes in a study of evolutionary origins and protein networks. Their 303 exploitable GenAge Human and 852 exploitable CellAge genes followed different eligibility rules. The supplements do not provide a gene-level list for this comparison, so the shared count agrees and membership equivalence remains unverified. The contribution here is the pinned workflow and evidence audit. [Bonnefous et al.](https://doi.org/10.1007/s11357-024-01234-9), [comparison and release details](docs/related_work.md#bonnefous-et-al-2024)
 
 Coverage depends on the source snapshots, curation and evidence filters. One conflicting FNTB / CHURC1-FNTB mapping remains unresolved and neither candidate changes the overlap. The v1.1 GO frequencies are descriptive and do not test statistical enrichment. Cell-culture perturbations and model-organism findings do not establish effects on human lifespan. Phase 7A has a separate RNA-seq environment and [reproduction commands](reports/phase7_data_feasibility.md#provenance-reuse-and-reproduction).
+
+## Run the evidence audit and Q&A
+
+Use Python 3.11 or newer from the repository root. This phase uses tracked project outputs and the standard library.
+
+```sh
+python3 -B -m scripts.phase7b_ledger --check
+python3 -B -m scripts.phase7b_qa 'Where is PMID 9454332 cited across CellAge and GO in the audit?'
+python3 -B -m scripts.phase7b_score
+```
+
+The [ledger](reports/phase7b_evidence_ledger.csv) preserves exact source rows and separates PMID reuse from what the papers establish about shared or distinct experiments. The [22-question benchmark](benchmarks/phase7b_questions.json) checks exact facts, references, evidence type and abstention. It is a development set for narrow English queries and does not measure generalization to other genes or literature. No language model was trained or used by the lookup.
 
 ## Official inputs
 

@@ -1,0 +1,166 @@
+[
+  {
+    "id": "Q01", "category": "Phase 7A", "question": "How many genes were tested in both Phase 7A cohorts?",
+    "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"tested": 109, "panel": 113},
+    "references": ["P7A:association"],
+    "reference_answer": "109 of the original 113 genes. The association section gives the denominator; four ledger rows have empty effects."
+  },
+  {
+    "id": "Q02", "category": "Phase 7A", "question": "How many healthy donors were eligible in the discovery and validation cohorts?",
+    "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"discovery": 97, "validation": 82},
+    "references": ["P7A:association"],
+    "reference_answer": "97 discovery and 82 validation donors. These are the analyzed donors, not the GEO series totals."
+  },
+  {
+    "id": "Q03", "category": "Phase 7A", "question": "What was the sign agreement between cohorts in Phase 7A?",
+    "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"agree": 63, "tested": 109, "percent": 57.8},
+    "references": ["P7A:association"],
+    "reference_answer": "63 of 109 (57.8%). Count same-sign pairs in the nonblank ledger rows; agreement is not joint significance."
+  },
+  {
+    "id": "Q04", "category": "Phase 7A", "question": "How many genes passed q < 0.05 in each cohort and in both with the same direction?",
+    "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"discovery": 48, "validation": 0, "both_concordant": 0},
+    "references": ["P7A:association"],
+    "reference_answer": "48 in discovery, zero in validation and zero in both with the same direction. The two q columns supply separate within-cohort tests."
+  },
+  {
+    "id": "Q05", "category": "Phase 7A", "question": "What was the Phase 7A replication score versus the matched median and its permutation p-value?",
+    "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"target": 0.00464, "matched_median": 0.00685, "permutation_p": 0.2889, "decision_met": false},
+    "references": ["P7A:association"],
+    "reference_answer": "0.00464 versus 0.00685, with validation permutation p = 0.2889; the prespecified rule was not met. See the first association table and its following paragraph."
+  },
+  {
+    "id": "Q06", "category": "Phase 7A", "question": "What was the Ridge MAE versus the median-age baseline and the median matched panel?",
+    "status": "answered", "evidence_type": "prediction_validation",
+    "facts": {"ridge_mae": 15.34, "median_age_mae": 20.38, "matched_median_mae": 15.03},
+    "references": ["P7A:prediction"],
+    "reference_answer": "15.34, 20.38 and 15.03 years, respectively. The prediction table and paragraph describe held-out discovery donors; no external predictions were tested."
+  },
+  {
+    "id": "Q07", "category": "Missing estimate", "question": "What were the Phase 7A partial correlations for TERT?",
+    "status": "not_measured", "evidence_type": "cohort_analysis",
+    "facts": {"gene": "TERT", "discovery_status": "low_detection_or_constant", "validation_status": "low_detection_or_constant", "discovery_r": null, "validation_r": null},
+    "references": ["P7A:gene:7015", "P7A:association"],
+    "reference_answer": "No partial correlation was estimated. The 7015 row fails eligibility in both cohorts and has blank r fields. Do not fill them with zeros."
+  },
+  {
+    "id": "Q08", "category": "Inconclusive findings", "question": "What were the Phase 7A partial correlations for TP53?",
+    "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"gene": "TP53", "discovery_status": "eligible", "validation_status": "eligible", "discovery_r": 0.165, "validation_r": -0.078},
+    "references": ["P7A:gene:7157", "P7A:association"],
+    "reference_answer": "+0.165 and −0.078 (three decimals from Entrez row 7157). Opposite signs across cohorts do not establish a consistent age association or invalidate the CellAge intervention."
+  },
+  {
+    "id": "Q09", "category": "CellAge provenance", "question": "Which CellAge records list TP53 and what effects and cancer-cell flags do they report?",
+    "status": "answered", "evidence_type": "database_record",
+    "facts": {"gene": "TP53", "records": [
+      {"record": 870, "effect": "Induces", "cancer_cell": "Yes", "type": "Replicative", "pmid": "9275177"},
+      {"record": 871, "effect": "Induces", "cancer_cell": "Yes", "type": "Stress-induced", "pmid": "9275177"},
+      {"record": 872, "effect": "Induces", "cancer_cell": "Yes", "type": "Oncogene-induced", "pmid": "9275177"}
+    ]},
+    "references": ["CellAge:870", "CellAge:871", "CellAge:872"],
+    "reference_answer": "Build 3 ordinals 870–872 label replicative, stress-induced and oncogene-induced senescence. All say Induces and Yes and cite Sugrue (9275177). The labels describe curation."
+  },
+  {
+    "id": "Q10", "category": "CellAge provenance", "question": "Which CellAge records list CDKN2A and what effects and cancer-cell flags do they report?",
+    "status": "answered", "evidence_type": "database_record",
+    "facts": {"gene": "CDKN2A", "records": [
+      {"record": 152, "effect": "Induces", "cancer_cell": "No", "type": "Replicative", "pmid": "9607312"},
+      {"record": 153, "effect": "Induces", "cancer_cell": "No", "type": "Stress-induced", "pmid": "9607312"},
+      {"record": 154, "effect": "Induces", "cancer_cell": "No", "type": "Oncogene-induced", "pmid": "9607312"}
+    ]},
+    "references": ["CellAge:152", "CellAge:153", "CellAge:154"],
+    "reference_answer": "Build 3 ordinals 152–154 list the three senescence labels, Induces, No and the Kato paper (9607312). They are separate database rows."
+  },
+  {
+    "id": "Q11", "category": "CellAge provenance", "question": "Which CellAge record lists TERT and what effect and cancer-cell flag does it report?",
+    "status": "answered", "evidence_type": "database_record",
+    "facts": {"gene": "TERT", "records": [
+      {"record": 845, "effect": "Inhibits", "cancer_cell": "No", "type": "Replicative", "pmid": "9454332"}
+    ]},
+    "references": ["CellAge:845"],
+    "reference_answer": "Build 3 ordinal 845 says Inhibits, Replicative and No; it cites Bodnar (9454332)."
+  },
+  {
+    "id": "Q12", "category": "Repeated citation", "question": "Where is PMID 9454332 cited across CellAge and GO in the audit?",
+    "status": "answered", "evidence_type": "citation_audit",
+    "facts": {"pmid": "9454332", "rows": 3, "genes": ["TERT"], "sources": ["CellAge", "GO"]},
+    "references": ["CellAge:845", "GAF:27897", "GAF:27918", "PMID:9454332"],
+    "reference_answer": "CellAge 845 and GAF lines 27897 (GO:0007004) and 27918 (GO:0090399). Bodnar reports a common culture experiment behind the records; the annotated claims differ."
+  },
+  {
+    "id": "Q13", "category": "Repeated citation", "question": "Where is PMID 15149599 cited across genes in the audit?",
+    "status": "answered", "evidence_type": "citation_audit",
+    "facts": {"pmid": "15149599", "rows": 3, "genes": ["CDKN2A", "TP53"], "sources": ["GO"]},
+    "references": ["GAF:133731", "GAF:133792", "GAF:289843", "PMID:15149599"],
+    "reference_answer": "TP53 GAF lines 133731 and 133792 and CDKN2A line 289843. Herbig's abstract separates telomere-triggered ATM–p53–p21 from p16 upregulation in a subset of cells."
+  },
+  {
+    "id": "Q14", "category": "Repeated citation", "question": "Do the three TP53 CellAge records establish independent senescence trigger experiments?",
+    "status": "insufficient_evidence", "evidence_type": "citation_audit",
+    "facts": {"gene": "TP53", "rows": 3, "distinct_pmids": 1, "independent_trigger_tests_established": false},
+    "references": ["CellAge:870", "CellAge:871", "CellAge:872", "PMID:9275177"],
+    "reference_answer": "No. Sugrue Methods and Results give a wild-type p53 induction assay in EJ cells. Parental irradiation, existing activated RAS and three CellAge labels do not establish separate trigger tests."
+  },
+  {
+    "id": "Q15", "category": "Distinct perturbations", "question": "Did Kato and Bond report distinct p16 experiments for CDKN2A?",
+    "status": "answered", "evidence_type": "primary_experiment",
+    "facts": {"distinct_reported_experiments": true, "kato_intervention": "p16 protein delivery", "bond_intervention": "p16 siRNA knockdown"},
+    "references": ["CellAge:152", "GAF:289848", "PMID:9607312", "PMID:14720514"],
+    "reference_answer": "Yes. Kato added tagged p16 to early-passage fibroblasts and induced arrest; Bond knocked down p16 and temporarily bypassed arrest in late-passage cells. Different reported perturbations are not proof of sample independence or a replication of the same test."
+  },
+  {
+    "id": "Q16", "category": "Inconclusive findings", "question": "Did p14ARF increase SA-beta-gal in the hTERT-immortalized mammary cells?",
+    "status": "answered", "evidence_type": "primary_experiment",
+    "facts": {"product": "Q8N726", "arrest_reported": true, "sa_beta_gal_increase_detected": false},
+    "references": ["GAF:592182", "PMID:14966292"],
+    "reference_answer": "The Results report p53-dependent growth arrest with senescence-like morphology and no detected increase in SA-β-gal. Q8N726 is p14ARF; this is a measured negative, not an unmeasured endpoint."
+  },
+  {
+    "id": "Q17", "category": "Unsupported mechanism", "question": "Does PMID 20351177 demonstrate TERT-mediated telomere maintenance via recombination?",
+    "status": "insufficient_evidence", "evidence_type": "annotation_source_check",
+    "facts": {"go_id": "GO:0000722", "code": "NAS", "mechanism_demonstrated": false},
+    "references": ["GAF:27882", "PMID:20351177"],
+    "reference_answer": "The NAS annotation exists, but Egan and Collins assayed holoenzyme assembly and subunit stoichiometry, not TERT-mediated recombination. This mismatch does not disprove the mechanism universally."
+  },
+  {
+    "id": "Q18", "category": "Unsupported human outcome", "question": "Does the reviewed evidence show that changing TP53, CDKN2A or TERT extends human lifespan?",
+    "status": "insufficient_evidence", "evidence_type": "scope_assessment",
+    "facts": {"human_lifespan_extension_established": false},
+    "references": ["P5A:comparison", "P7A:prediction"],
+    "reference_answer": "Insufficient evidence. The comparison separates culture experiments from the mouse survival finding; Phase 7A predicts chronological age. None establishes a human survival effect."
+  },
+  {
+    "id": "Q19", "category": "Missing measurement", "question": "Did Bodnar measure reversal of established senescence by TERT?",
+    "status": "not_measured", "evidence_type": "primary_experiment",
+    "facts": {"replicative_senescence_delay_reported": true, "established_senescence_reversal_tested": false},
+    "references": ["CellAge:845", "PMID:9454332"],
+    "reference_answer": "No. Bodnar followed actively growing telomerase-negative cultures after hTERT transfection and found prolonged proliferation. The experimental design did not test treatment of cultures already in stable arrest."
+  },
+  {
+    "id": "Q20", "category": "Outside manual audit", "question": "What does this manual audit establish about causal senescence effects of AKT1?",
+    "status": "insufficient_evidence", "evidence_type": "scope_assessment",
+    "facts": {"gene": "AKT1", "manual_review_in_scope": false},
+    "references": ["P5A:scope", "P3:gene:207"],
+    "reference_answer": "The project confirms shared membership for Entrez 207 but this audit does not establish causal AKT1 effects. Phase 5A scope is limited to TP53, CDKN2A and TERT."
+  },
+  {
+    "id": "Q21", "category": "Phase 7A paraphrase", "question": "How often did the direction of the signal stay the same across the two cohorts?",
+    "status": "answered", "evidence_type": "cohort_analysis",
+    "facts": {"agree": 63, "tested": 109, "percent": 57.8},
+    "references": ["P7A:association"],
+    "reference_answer": "63 of 109 (57.8%), the same direction comparison as Q03. Verify using the signs of the two partial correlations in the association ledger."
+  },
+  {
+    "id": "Q22", "category": "Organism outcome", "question": "What organism-level survival outcome did Ghosh report when reducing Trp53 dosage?",
+    "status": "answered", "evidence_type": "primary_experiment",
+    "facts": {"organism": "mouse", "background": "Sirt6-null", "survival_direction": "increased"},
+    "references": ["GAF:133834", "PMID:29474172"],
+    "reference_answer": "Sirt6-null mice with one Trp53 copy survived longer than Sirt6-null controls in Ghosh Figure 2D–E. The disease model and comparator are essential; the GAF human target does not make the experiment human."
+  }
+]
