@@ -4,6 +4,25 @@
 
 The project links aging and cellular senescence records to their source evidence, tests a fixed gene panel in two human fibroblast RNA-seq cohorts, and evaluates a deterministic research lookup. It documents where curated evidence agrees, how the panel performed against matched controls and where the available experiments leave claims unresolved.
 
+## Key findings
+
+- **113 shared genes** were validated against pinned GenAge Human and CellAge snapshots. This overlap count was reported previously; the contribution here is traceable reconstruction and evidence review.
+- **No fixed-panel advantage in RNA-seq:** 109 genes were evaluable in two healthy fibroblast cohorts, and the cross-cohort age-association score did not exceed expression-matched control panels.
+- **Auditable evidence, not a general-purpose AI:** five genes received focused literature review. The deterministic lookup improved from **5/24 to 18/24** correct answers on a small held-out set of unfamiliar phrasings, with important scope limitations.
+
+## Quick start
+
+Use Python 3.11+ from the repository root. These lookups use tracked results and the standard library; reproducing the original genomic analyses additionally requires the checksum-pinned source files.
+
+```sh
+python3 -B -m scripts.phase7c_qa 'Give the partial r for p53 in each dataset.'
+python3 -B -m scripts.phase7d_evidence 'cellage SIRT6'
+```
+
+The first command is the terminology-normalized research Q&A interface; the second queries the FOXO3/SIRT6 evidence extension. Both return structured JSON with source references and limitations. **Neither is a trained language model.** See [verification commands](#verify-the-evidence-audit-and-benchmarks) and [the consolidated report](reports/research_report_v2.md).
+
+## Research stages
+
 | Stage | What to read |
 | --- | --- |
 | **v1.1 · Descriptive analysis** | [Original report](reports/research_report_v1.md) · [Prior art and source comparison](docs/related_work.md) |
@@ -12,7 +31,7 @@ The project links aging and cellular senescence records to their source evidence
 | **7C · Held-out evaluation** | [Evaluation protocol](docs/phase7c_evaluation_protocol.md) · [Baseline and normalized lookup results](reports/phase7c_results.md) |
 | **7D · Focused expansion** | [FOXO3 and SIRT6 case studies](reports/phase7d_case_studies.md) · [Extension ledger and verification](reports/phase7b_evidence_audit.md#phase-7d-extension) |
 
-## v1.1 results
+## Detailed v1.1 inventory
 
 | Measure | Result |
 | --- | ---: |
@@ -37,13 +56,12 @@ Bonnefous et al. (2024) previously reported 113 shared genes in a study of evolu
 
 Coverage depends on the source snapshots, curation and evidence filters. One conflicting FNTB / CHURC1-FNTB mapping remains unresolved and neither candidate changes the overlap. The v1.1 GO frequencies are descriptive and do not test statistical enrichment. Cell-culture perturbations and model-organism findings do not establish effects on human lifespan. Phase 7A has a separate RNA-seq environment and [reproduction commands](reports/phase7_data_feasibility.md#provenance-reuse-and-reproduction).
 
-## Run the evidence audit and Q&A
+## Verify the evidence audit and benchmarks
 
-Use Python 3.11 or newer from the repository root. This phase uses tracked project outputs and the standard library.
+Run these standard-library checks from the repository root with Python 3.11+:
 
 ```sh
 python3 -B -m scripts.phase7b_ledger --check
-python3 -B -m scripts.phase7b_qa 'Where is PMID 9454332 cited across CellAge and GO in the audit?'
 python3 -B -m scripts.phase7b_score
 python3 -B -m scripts.phase7c_score baseline heldout
 python3 -B -m scripts.phase7c_score candidate heldout
