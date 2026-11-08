@@ -1,6 +1,8 @@
 # AI & Longevity: Exploring Genes Associated with Human Aging
 
-**Version 1.1** · Descriptive research and evidence review
+**Completed v1.1** · Descriptive research and evidence review
+
+**Experimental v2.0 · Phase 7A** evaluates fibroblast RNA-seq in two cohorts. Of the 113 shared genes, 109 could be tested in both. Their cross-cohort signal did not exceed the matched control benchmark. Ridge predicted chronological age better than constant predictions within discovery, with errors comparable to expression-matched random panels. [Frozen protocol](docs/phase7_research_protocol.md), [data and prior work](reports/phase7_data_feasibility.md), [baseline results](reports/phase7_baseline_results.md)
 
 > Which human genes are represented in both the GenAge Human and CellAge databases, and which biological processes are associated with these genes?
 
@@ -10,7 +12,7 @@ This independent reproducible reanalysis and evidence review compares two Human 
 - [One-page research brief](reports/research_brief.md) summarizes the study for prospective internship supervisors.
 - [Related work](docs/related_work.md) compares the published overlap, documents the limits of gene-by-gene verification and outlines a follow-up.
 
-## Main results
+## v1.1 results
 
 | Measure | Result |
 | --- | ---: |
@@ -33,7 +35,7 @@ The workflow verifies the input checksums, validates NCBI Gene IDs and HGNC mapp
 
 Bonnefous et al. (2024) previously reported 113 shared genes in a study of evolutionary origins and protein networks. Their 303 exploitable GenAge Human and 852 exploitable CellAge genes followed different eligibility rules. The supplements do not provide a gene-level list for this comparison, so the shared count agrees and membership equivalence remains unverified. The contribution here is the pinned workflow and evidence audit. [Bonnefous et al.](https://doi.org/10.1007/s11357-024-01234-9), [comparison and release details](docs/related_work.md#bonnefous-et-al-2024)
 
-Coverage depends on the source snapshots, curation and evidence filters. One conflicting FNTB / CHURC1-FNTB mapping remains unresolved and neither candidate changes the overlap. GO frequencies are descriptive. The project did not test statistical enrichment or train a machine-learning model. Cell-culture perturbations and model-organism findings do not establish effects on human lifespan. A proposed follow-up would test donor-age associations for the fixed gene set in two independent human fibroblast RNA-seq cohorts. [Proposed Phase 7](docs/related_work.md#proposed-phase-7--replication-across-human-fibroblast-rna-seq-cohorts)
+Coverage depends on the source snapshots, curation and evidence filters. One conflicting FNTB / CHURC1-FNTB mapping remains unresolved and neither candidate changes the overlap. The v1.1 GO frequencies are descriptive and do not test statistical enrichment. Cell-culture perturbations and model-organism findings do not establish effects on human lifespan. Phase 7A has a separate RNA-seq environment and [reproduction commands](reports/phase7_data_feasibility.md#provenance-reuse-and-reproduction).
 
 ## Official inputs
 

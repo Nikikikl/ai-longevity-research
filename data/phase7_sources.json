@@ -1,0 +1,30 @@
+{
+  "GSE113957_family.soft.gz": {
+    "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE113nnn/GSE113957/soft/GSE113957_family.soft.gz",
+    "download_date": "2026-11-08",
+    "format": "gzip-compressed GEO family SOFT",
+    "bytes": 12751,
+    "sha256": "041e5adfd00beb232d0e73503bfd8f51a0b5018e3849b7a5143e608aac6a86f4"
+  },
+  "GSE113957_fpkm.txt.gz": {
+    "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE113nnn/GSE113957/suppl/GSE113957_fpkm.txt.gz",
+    "download_date": "2026-11-08",
+    "format": "gzip-compressed TSV of RefSeq representative-isoform FPKM",
+    "bytes": 7532882,
+    "sha256": "999c9d720ff7f0dfe59675f347803d3a0181231313aace2f8406f08528aa123d"
+  },
+  "GSE226189_series_matrix.txt.gz": {
+    "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE226nnn/GSE226189/matrix/GSE226189_series_matrix.txt.gz",
+    "download_date": "2026-11-08",
+    "format": "gzip-compressed GEO series matrix metadata",
+    "bytes": 7381,
+    "sha256": "7e8b01af06b90111e17509c476b4042e53f41de1d815eb281fdb6c19dae79b69"
+  },
+  "GSE226189_RAW.tar": {
+    "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE226nnn/GSE226189/suppl/GSE226189_RAW.tar",
+    "download_date": "2026-11-08",
+    "format": "tar of gzip-compressed gene count and circular RNA TSVs; use geneCOUNT only",
+    "bytes": 31559680,
+    "sha256": "d2cdcc77d7a687df7c4ebbbf3285496efbf182c0cb5313c70d5d3f3f25979a87"
+  }
+}
