@@ -52,3 +52,15 @@ python3 -B -m unittest discover -s tests -v
 ```
 
 The script writes [reports/gene_identifier_audit.md](reports/gene_identifier_audit.md) and the local `data/processed/gene_mapping.csv`. Only confirmed mappings populate the approved HGNC fields. Each mapping carries the original source identifier, symbol, and record ordinals. The original archives retain the experimental details for all referenced rows. Git ignores the raw references and the generated CSV.
+
+## Reproduce the descriptive gene overlap
+
+Use the existing `data/processed/gene_mapping.csv`. If it is missing, regenerate it with `python3 -B -m scripts.harmonize_genes` using the original pinned local archives and reference snapshots described above. The overlap script checks the mapping SHA-256 against the Phase 2 audit before generating results.
+
+```sh
+python3 -B -m scripts.analyze_overlap
+python3 -B -m scripts.analyze_overlap --check
+python3 -B -m unittest discover -s tests -v
+```
+
+The [overlap report](reports/gene_overlap.md) includes the confirmed counts, the [shared gene table](reports/gene_overlap_genes.csv), and a [bar chart](reports/gene_overlap.svg). The shared gene table links each gene to its original GenAge Human and CellAge records. The report keeps the unresolved CellAge mapping separate and tests both hypothetical assignments.
