@@ -8,6 +8,7 @@ from scripts.research_assistant import answer_question
 from web_ui.presentation import answer_html
 
 MODES = {"Research Q&A": "research", "Evidence records": "records"}
+MODE_PHASES = {"Research Q&A": "7C", "Evidence records": "7D"}
 
 SCOPE = {
     "Research Q&A": "Phase 7C · English questions about the RNA-seq panel and the TP53, CDKN2A and TERT audit.",
@@ -69,7 +70,8 @@ def show_turn(index, question, mode, result):
             st.html(f'<div class="user-copy">{escape(question)}</div>')
     with st.container(key=f"answer-turn-{index}"):
         with st.chat_message("assistant", avatar=":material/science:"):
-            st.html(f'<div class="turn-label">{escape(mode)}</div>')
+            st.html(f'<div class="turn-mode {MODES[mode]}"><span>Phase {MODE_PHASES[mode]}</span>'
+                    f'<strong>{escape(mode)}</strong></div>')
             st.html(answer_html(result))
             with st.expander("Technical details · JSON"):
                 st.json(result, expanded=False)

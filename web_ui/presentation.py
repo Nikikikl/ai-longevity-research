@@ -52,13 +52,26 @@ def reference_html(reference):
         f'<a href="{escape(url)}" target="_blank" rel="noopener noreferrer">{label} ↗</a>'
         for label, url in reference_links(reference)
     ]
-    locations = [
-        f'<div class="reference-location"><span>{label}</span> <code>{escape(str(reference[field]))}</code></div>'
-        for field, label in LOCAL_FIELDS.items() if reference.get(field)
-    ]
     identifier = escape(str(reference["id"]))
-    return (f'<li><div class="reference-heading"><strong>{identifier}</strong>{"".join(links)}</div>'
-            f'{"".join(locations)}</li>')
+    return f'<li class="reference-heading"><strong>{identifier}</strong>{"".join(links)}</li>'
+
+
+def evidence_details_html(references, study):
+    records = []
+    for reference in references:
+        fields = [(label, reference[key]) for key, label in LOCAL_FIELDS.items() if reference.get(key)]
+        if fields:
+            locations = "".join(
+                f'<dt>{label}</dt><dd><code>{escape(str(value))}</code></dd>' for label, value in fields
+            )
+            records.append(f'<strong>{escape(str(reference["id"]))}</strong><dl>{locations}</dl>')
+    if study:
+        fields = "".join(f"<dt>{escape(key.replace('_', ' ').capitalize())}</dt><dd>{escape(value)}</dd>"
+                         for key, value in study.items())
+        records.append(f"<strong>Reviewed record</strong><dl>{fields}</dl>")
+    if records:
+        return f'<details class="evidence-details"><summary>Evidence details</summary>{"".join(records)}</details>'
+    return ""
 
 
 def numerical_findings(facts, status):
@@ -101,8 +114,5 @@ def answer_html(result):
         limits = "".join(f"<li>{escape(limit)}</li>" for limit in result["limitations"])
         parts.append(f'<h4>Limitations</h4><ul class="limitations">{limits}</ul>')
 
-    if result.get("details"):
-        fields = "".join(f"<dt>{escape(key.replace('_', ' ').capitalize())}</dt><dd>{escape(value)}</dd>"
-                         for key, value in result["details"].items())
-        parts.append(f'<details class="study-details"><summary>Reviewed record details</summary><dl>{fields}</dl></details>')
+    parts.append(evidence_details_html(result["references"], result.get("details")))
     return f'<div class="scientific-answer">{"".join(parts)}</div>'

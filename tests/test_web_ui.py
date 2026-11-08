@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 from pathlib import Path
 import subprocess
@@ -34,14 +35,28 @@ class AnswerPresentationTests(unittest.TestCase):
         local = reference_html({"id": "P7A:gene:7015", "path": "reports/phase7_gene_associations.csv",
                                 "locator": "Entrez Gene ID 7015"})
         self.assertIn("P7A:gene:7015", local)
-        self.assertIn("Local source", local)
-        self.assertIn("Entrez Gene ID 7015", local)
+        self.assertNotIn("reports/", local)
+        self.assertNotIn("Entrez Gene ID 7015", local)
         self.assertNotIn("href=", local)
 
         linked = reference_html({"id": "GAF:591445", "pmid": "25541994",
                                  "reviewed_text_url": "https://journals.plos.org/plosone/article?id=test&view=1"})
         self.assertIn('href="https://pubmed.ncbi.nlm.nih.gov/25541994/"', linked)
         self.assertIn("id=test&amp;view=1", linked)
+
+    def test_evidence_details_hide_locators_without_changing_the_response(self):
+        result = answer_question("pmid 25819580", mode="records")
+        original = deepcopy(result)
+        compact, details = answer_html(result).split('<details class="evidence-details">', 1)
+        self.assertTrue(details.startswith("<summary>Evidence details</summary>"))
+        for ref in result["references"]:
+            self.assertIn(f'<strong>{ref["id"]}</strong>', compact)
+            for field in ("path", "member", "raw_path", "ledger"):
+                if field in ref:
+                    self.assertNotIn(ref[field], compact)
+                    self.assertIn(ref[field], details)
+        self.assertIn("https://pubmed.ncbi.nlm.nih.gov/25819580/", compact)
+        self.assertEqual(result, original)
 
     def test_link_resolver_rejects_local_and_malformed_targets(self):
         urls = ("file:///etc/hosts", "http://127.0.0.1:8501", "https://foo.local/",
