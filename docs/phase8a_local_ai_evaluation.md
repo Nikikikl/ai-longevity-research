@@ -2,7 +2,9 @@
 
 Phase 8A is an engineering prototype built on the v2.0.0 research release. The [lexical retriever](../scripts/local_retrieval.py) searches five tracked reports, including their reviewed evidence-record summaries. It sends up to four passages, with a total excerpt budget of 3,600 characters. Source cards link to the immutable v2.0.0 commit and use report and line identifiers. Markdown link labels are kept in the excerpt so the prompt does not carry the link destinations.
 
-The [chat module](../scripts/local_ai.py) talks to Ollama on `127.0.0.1:11434`. It requests `qwen3:1.7b` with thinking disabled, a 4,096-token context, up to 384 output tokens, temperature 0.1 and a 90-second socket timeout for generation. The model may use up to two preceding user questions of 400 characters each to resolve a follow-up. Generated replies never enter the prompt as evidence.
+The chat module talks to Ollama on `127.0.0.1:11434`. It requests `qwen3:1.7b` with thinking disabled, a 4,096-token context, up to 384 output tokens, temperature 0 and a 90-second socket timeout for generation. The model may use up to two preceding user questions of 400 characters each to resolve a follow-up. The prompt identifies the highest-ranked excerpt and includes the other retrieved passages as context. [Chat module](../scripts/local_ai.py)
+
+The response schema requires `status`, `answer` and `source_ids`. The schema limits IDs to the excerpts supplied for that question. Python independently validates the IDs and builds the source cards. An answered response requires a source. The app tries one correction with a 30-second socket timeout after invalid model output. It keeps the same excerpts and discards the invalid reply.
 
 ## Run the manual evaluation
 
@@ -29,10 +31,23 @@ At [http://127.0.0.1:8501](http://127.0.0.1:8501), select **Local AI — Experim
 | 9 · Unsupported inference | Does TERT help people live longer? | Abstain from concluding that a TERT intervention extends human lifespan. The supplied work describes cell-culture outcomes or observational markers. [TERT case study](../reports/gene_case_studies.md#tert--the-catalytic-subunit-of-telomerase) |
 | 10 · Out of scope | How do I bake sourdough bread? | The retriever finds no relevant passage. The UI reports insufficient evidence without running inference. |
 
-For each case, record the model tag and ID from `ollama list`, the retrieved and cited IDs, the displayed answer or warning, and approximate response time. Mark omitted expected facts, unsupported claims, citations that fail to support the sentence, citation warnings, and any failure to abstain. A source ID can be valid even when the cited passage does not support the claim.
+For each case, record the model tag and ID from `ollama list`, the retrieved and cited IDs, the displayed answer or warning, and approximate response time. Mark omitted expected facts, unsupported claims, citations that fail to support a claim, citation warnings, and any failure to abstain. A source ID can be valid even when the cited passage does not support the claim.
 
 ## Run record
 
-Ollama and its API were unavailable on the development machine. Live model accuracy, unsupported-claim frequency, citation accuracy and response time remain unmeasured. The automated tests exercise retrieval, request settings, transport failures, citation validation and Streamlit behavior with mocks.
+### Live integration check, 2026-11-09
+
+Ollama 0.40.15 served `qwen3:1.7b` (model ID `8f68893c685c`). Before the fix, both reported failures returned complete JSON with status `answered`. The SIRT6 answer had no passage ID. The TERT answer contained the correct ID `P7A-L17-L17` without square brackets. The previous schema constrained the response fields but left citation formatting inside the answer string. The validator rejected both replies.
+
+The final run submitted each question in a fresh conversation through Streamlit's AppTest adapter using the real local API. All four responses completed on the first attempt in this run. The retrieved excerpts were available in each case.
+
+| Question | Result and source IDs | Manual review |
+| --- | --- | --- |
+| SIRT6 knockdown and replicative senescence (case 6) | `answered`, `P7D-L22-L22` | Correctly answered in Russian that the experiment did not establish replicative senescence and mentioned increased SA-β-gal and other markers. It omitted reduced proliferation and the specific gap in the serial-passage design. |
+| Missing TERT partial correlations (case 3) | `answered`, `P7A-L17-L17` | Correctly attributed the missing correlations to the expression filter in both cohorts. |
+| FOXO3 knockdown in dermal fibroblasts (case 4) | `answered`, `P7D-L16-L16` | Correctly reported longer doubling times and changes in senescence-associated markers. It limited the interpretation to the culture model. |
+| How many years does TERT gene therapy add to the human lifespan? | `insufficient_evidence`, no cited IDs | Correctly abstained without reporting a lifespan effect. |
+
+Earlier structured-output prompt variants produced valid IDs alongside a claim that SIRT6 knockdown proved replicative senescence and an explanation that confused missing TERT expression correlations with human lifespan. These errors informed the final prompt and illustrate why ID validation alone cannot establish scientific support. This four-question check measures behavior on these prompts only. Automated tests separately exercise retrieval, request settings, transport failures, invalid IDs, correction limits and Streamlit behavior with mocks.
 
 The corpus is limited to selected project reports and their scope. Lexical matching can miss paraphrases and vocabulary outside the indexed text. The Russian retrieval vocabulary covers a small set of common terms. The prototype checks whether citation IDs were supplied to the model. Scientific interpretation still requires reading the cited sources and checking the study design, endpoint and population.

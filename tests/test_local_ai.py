@@ -13,8 +13,9 @@ FOXO3_QUESTION = "What happened when FOXO3 was knocked down in human dermal fibr
 FOLLOW_UP = "And what did they find about human longevity?"
 
 
-def chat_response(answer, status="answered"):
-    return {"done": True, "message": {"content": json.dumps({"status": status, "answer": answer})}}
+def chat_response(answer, source_ids=(), *, status="answered"):
+    content = json.dumps({"status": status, "answer": answer, "source_ids": source_ids})
+    return {"done": True, "message": {"content": content}}
 
 
 class RetrievalTests(unittest.TestCase):
@@ -76,14 +77,17 @@ class LocalAnswerTests(unittest.TestCase):
     @patch("scripts.local_ai.request")
     def test_only_supplied_passages_can_become_source_cards(self, request):
         valid_id = local_retrieval.retrieve(TERT_QUESTION)[0].id
-        for answer, expected in (
-            (f"TERT failed the expression filter in both cohorts [{valid_id}].", "answered"),
-            (f"A claim [{valid_id}] and an invented citation [P7A-L999-L999].", "citation_error"),
-            ("No citation here.", "citation_error"),
-            (f"Fake link [{valid_id}](https://example.com).", "citation_error"),
+        for answer, ids, expected in (
+            ("TERT failed the expression filter in both cohorts.", [valid_id], "answered"),
+            ("This is a claim.", [valid_id, "P7A-L999-L999"], "citation_error"),
+            ("This is a claim.", ["P7D-L22-L22"], "citation_error"),
+            ("No citation here.", [], "citation_error"),
+            (f"Inline reference ({valid_id}).", [valid_id], "citation_error"),
+            (f"Fake link [{valid_id}](https://example.com).", [valid_id], "citation_error"),
         ):
             with self.subTest(expected=expected, answer=answer):
-                request.side_effect = [{"models": [{"name": local_ai.MODEL}]}, chat_response(answer)]
+                response = chat_response(answer, ids)
+                request.side_effect = [{"models": [{"name": local_ai.MODEL}]}, response, response]
                 result = local_ai.answer_local(TERT_QUESTION)
                 self.assertEqual(result.status, expected)
                 if expected == "answered":
@@ -98,7 +102,7 @@ class LocalAnswerTests(unittest.TestCase):
     def test_model_can_abstain_when_excerpts_do_not_support_a_conclusion(self, request):
         request.side_effect = [
             {"models": [{"model": local_ai.MODEL}]},
-            chat_response("These passages lack a human lifespan intervention.", "insufficient_evidence"),
+            chat_response("These passages lack a human lifespan intervention.", status="insufficient_evidence"),
         ]
         result = local_ai.answer_local("Does TERT help people live longer?")
         self.assertEqual(result.status, "insufficient_evidence")
@@ -147,7 +151,7 @@ class LocalAnswerTests(unittest.TestCase):
         previous = ["DO NOT SEND", FOXO3_QUESTION + " " * 500 + "TRUNCATE ME", "Did it change cell morphology?"]
         request.side_effect = [
             {"models": [{"name": local_ai.MODEL}]},
-            chat_response("The supplied evidence is insufficient.", "insufficient_evidence"),
+            chat_response("The supplied evidence is insufficient.", status="insufficient_evidence"),
         ]
         question = FOLLOW_UP + " " * 1200 + "TRUNCATE ME"
         local_ai.answer_local(question, previous)
@@ -156,23 +160,60 @@ class LocalAnswerTests(unittest.TestCase):
         self.assertEqual(payload["model"], local_ai.MODEL)
         self.assertFalse(payload["think"])
         self.assertFalse(payload["stream"])
-        self.assertEqual(payload["options"], {"num_ctx": 4096, "num_predict": 384, "temperature": 0.1})
+        self.assertEqual(payload["options"], {"num_ctx": 4096, "num_predict": 384, "temperature": 0})
         messages = payload["messages"]
         self.assertEqual([message["role"] for message in messages], ["system", "user"])
         context = json.loads(messages[1]["content"])
         self.assertEqual(len(context["earlier_questions"]), local_ai.MAX_PRIOR_QUESTIONS)
         self.assertEqual(context["earlier_questions"][0], previous[1][:local_ai.MAX_PRIOR_CHARS])
         self.assertEqual(context["question"], question[:local_ai.MAX_QUESTION_CHARS])
-        self.assertIn("P7D-L18-L18", {p["id"] for p in context["passages"]})
+        retrieved = local_retrieval.retrieve(context["question"], context["earlier_questions"])
+        self.assertEqual(context["primary_excerpt"]["id"], retrieved[0].id)
         self.assertNotIn("TRUNCATE ME", messages[1]["content"])
+        schema = payload["format"]
+        self.assertEqual(set(schema["required"]), {"status", "answer", "source_ids"})
+        ids = [p["id"] for p in (context["primary_excerpt"], *context["other_excerpts"])]
+        self.assertIn("P7D-L18-L18", ids)
+        self.assertEqual(schema["properties"]["source_ids"]["items"]["enum"], ids)
+        self.assertEqual(schema["properties"]["source_ids"]["maxItems"], len(ids))
 
     @patch("scripts.local_ai.request")
-    def test_truncated_or_malformed_answers_are_withheld(self, request):
-        for response in ({"done": False}, {"done": True, "message": {"content": "{broken"}}):
-            request.side_effect = [{"models": [{"name": local_ai.MODEL}]}, response]
-            result = local_ai.answer_local(TERT_QUESTION)
-            self.assertEqual(result.status, "invalid_response")
-            self.assertEqual(result.cited, ())
+    def test_truncated_or_malformed_answers_are_withheld_after_one_correction(self, request):
+        for response in (
+            {"done": False},
+            {"done": True, "message": {"content": "{broken"}},
+            {"done": True, "message": {"content": '{"status":"answered","answer":"Legacy response"}'}},
+            chat_response("Invalid source_ids type", [17]),
+        ):
+            with self.subTest(response=response):
+                request.reset_mock()
+                request.side_effect = [{"models": [{"name": local_ai.MODEL}]}, response, response]
+                result = local_ai.answer_local(TERT_QUESTION)
+                self.assertEqual(result.status, "invalid_response")
+                self.assertEqual(result.cited, ())
+                self.assertTrue(result.passages)
+                self.assertEqual(request.call_count, 3)
+
+    @patch("scripts.local_ai.request")
+    def test_correction_reuses_evidence_and_accepts_only_valid_replacement(self, request):
+        passage = local_retrieval.retrieve(TERT_QUESTION)[0]
+        request.side_effect = [
+            {"models": [{"name": local_ai.MODEL}]},
+            chat_response("Discard this failed answer.", ["P7A-L999-L999"]),
+            chat_response("TERT failed the filter in both cohorts.", [passage.id]),
+        ]
+        result = local_ai.answer_local(TERT_QUESTION)
+        self.assertEqual(result.status, "answered")
+        self.assertEqual(result.cited, (passage,))
+        self.assertEqual(result.text, "TERT failed the filter in both cohorts.")
+        self.assertEqual(request.call_count, 3)
+        original, correction = (call.args for call in request.call_args_list[1:])
+        self.assertEqual(correction[:2], ("/api/chat", local_ai.CORRECTION_TIMEOUT))
+        self.assertLess(correction[1], original[1])
+        self.assertEqual(correction[2]["format"], original[2]["format"])
+        self.assertEqual(correction[2]["messages"][1:], original[2]["messages"][1:])
+        self.assertIn("failed validation", correction[2]["messages"][0]["content"])
+        self.assertNotIn("Discard this failed answer.", str(correction[2]))
 
 
 @unittest.skipUnless(find_spec("streamlit"), "Install requirements-ui.txt to run Streamlit tests")
@@ -183,9 +224,9 @@ class LocalUITests(unittest.TestCase):
 
         passage = local_retrieval.retrieve(TERT_QUESTION)[0]
         models = {"models": [{"name": local_ai.MODEL}]}
-        good = chat_response(f"TERT failed the filter in both cohorts [{passage.id}].")
-        bad = chat_response("An invented claim [P7A-L999-L999].")
-        request.side_effect = [models, models, good, models, models, bad, models]
+        good = chat_response("TERT failed the filter in both cohorts.", [passage.id])
+        bad = chat_response("An invented claim.", ["P7A-L999-L999"])
+        request.side_effect = [models, models, good, models, models, bad, bad, models]
         app = AppTest.from_file(str(local_retrieval.ROOT / "web_ui/app.py")).run()
         app.radio[0].set_value("Local AI — Experimental").run()
         app.chat_input[0].set_value(TERT_QUESTION).run()
@@ -197,6 +238,7 @@ class LocalUITests(unittest.TestCase):
         self.assertFalse(app.exception)
         self.assertTrue(any("withheld" in warning.value for warning in app.warning))
         self.assertFalse(any("P7A-L999-L999" in html.proto.body for html in app.get("html")))
+        self.assertFalse(any("An invented claim" in html.proto.body for html in app.get("html")))
 
     @patch("scripts.local_ai.check_model")
     def test_existing_modes_never_contact_ollama(self, check_model):
