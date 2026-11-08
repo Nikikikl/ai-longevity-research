@@ -31,9 +31,28 @@ python3 -m venv .venv/ui
 .venv/ui/bin/python -m streamlit run web_ui/app.py
 ```
 
-Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Choose **Research Q&A** for narrow English questions (Phase 7C) or **Evidence records** for structured commands (Phase 7D). Examples select their mode when clicked. History lasts for the browser session, and each query is evaluated independently.
+Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Choose **Research Q&A** for narrow English questions (Phase 7C) or **Evidence records** for structured commands (Phase 7D). Both modes work independently of Ollama and evaluate each query on its own. Examples select their mode when clicked. Chat history lasts for the browser session.
 
 The framework-independent [Python interface](scripts/research_assistant.py) is `answer_question(question, mode="research")` for Phase 7C or `mode="records"` for Phase 7D. It returns the same dictionary as the corresponding CLI: `status`, `abstains`, `answer`, `facts`, `evidence_type`, `references`, `limitations`, and optional `details`. Status is one of `answered`, `not_measured`, `insufficient_evidence`, or `unsupported_question`. The interface reads tracked evidence locally and accepts no conversation context.
+
+### Local AI — Experimental
+
+This mode searches five tracked reports and asks a local model to synthesize the retrieved excerpts. Install the macOS app in Applications, quit it if it is running, and start its bundled server in Terminal with cloud features disabled. [Download Ollama for macOS](https://ollama.com/download/mac) · [Ollama macOS setup](https://docs.ollama.com/macos)
+
+```sh
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NO_CLOUD=1 /Applications/Ollama.app/Contents/Resources/ollama serve
+```
+
+Leave that terminal open. In a second terminal, download the 1.7B model (about 1.4 GB) and check that Ollama lists it. [Ollama model page](https://ollama.com/library/qwen3:1.7b)
+
+```sh
+/Applications/Ollama.app/Contents/Resources/ollama pull qwen3:1.7b
+/Applications/Ollama.app/Contents/Resources/ollama list
+```
+
+Launch Streamlit with the command above and select **Local AI — Experimental**. Try “Why are the Phase 7A partial correlations for TERT missing?” or “Что показал нокдаун SIRT6 в хондроцитах?” Expand **Retrieved evidence** to read the excerpts and open the exact report lines. The app shows up to six recent Local AI turns and uses up to two preceding questions for follow-ups. **Clear conversation** resets the session history.
+
+Treat generated prose as an experimental summary. The app checks citation IDs against the retrieved passages. Check the excerpts yourself for whether they support each claim. [Phase 8A manual evaluation and limitations](docs/phase8a_local_ai_evaluation.md)
 
 ## Research stages
 
