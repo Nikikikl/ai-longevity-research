@@ -21,6 +21,20 @@ python3 -B -m scripts.phase7d_evidence 'cellage SIRT6'
 
 The first command is the terminology-normalized research Q&A interface; the second queries the FOXO3/SIRT6 evidence extension. Both return structured JSON with source references and limitations. **Neither is a trained language model.** See [verification commands](#verify-the-evidence-audit-and-benchmarks) and [the consolidated report](reports/research_report_v2.md).
 
+## Launch web chat
+
+From the repository root on macOS with Python 3.11 or newer:
+
+```sh
+python3 -m venv .venv/ui
+.venv/ui/bin/python -m pip install -r requirements-ui.txt
+.venv/ui/bin/python -m streamlit run web_ui/app.py
+```
+
+Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Choose **Research Q&A** for narrow English questions (Phase 7C) or **Evidence records** for structured commands (Phase 7D). Examples select their mode when clicked. History lasts for the browser session, and each query is evaluated independently.
+
+The framework-independent [Python interface](scripts/research_assistant.py) is `answer_question(question, mode="research")` for Phase 7C or `mode="records"` for Phase 7D. It returns the same dictionary as the corresponding CLI: `status`, `abstains`, `answer`, `facts`, `evidence_type`, `references`, `limitations`, and optional `details`. Status is one of `answered`, `not_measured`, `insufficient_evidence`, or `unsupported_question`. The interface reads tracked evidence locally and accepts no conversation context.
+
 ## Research stages
 
 | Stage | What to read |
