@@ -2,7 +2,12 @@
 
 > Which human genes are represented in both the GenAge Human and CellAge databases, and which biological processes are associated with these genes?
 
-This independent computational biology project starts with two curated Human Ageing Genomic Resources (HAGR) exports. GenAge Human assembles candidate genes for human aging, drawing on human and model-organism evidence. CellAge records evidence from gene manipulations in human cells and focuses on cellular senescence. The initial milestone acquires the files and audits their structure and identifiers. The [research plan](docs/research_plan.md) describes the later gene intersection and functional annotation. Machine learning and functional enrichment are outside the initial milestone.
+This independent computational biology project compares two curated Human Ageing Genomic Resources (HAGR) exports. GenAge Human assembles candidate genes for human aging, drawing on human and model-organism evidence. CellAge records evidence from perturbation experiments on cellular senescence in human cells.
+
+The initial descriptive study is complete through Phase 5B. It validates gene identifiers, quantifies the overlap, summarizes direct Gene Ontology Biological Process annotations, and reviews primary evidence for TP53, CDKN2A and TERT. The project did not train a machine-learning model or perform statistical enrichment tests.
+
+- [Research report v1](reports/research_report_v1.md) covers the methods, results, evidence and limitations for academic review.
+- [One-page research brief](reports/research_brief.md) summarizes the study for prospective internship supervisors.
 
 ## Official inputs
 
