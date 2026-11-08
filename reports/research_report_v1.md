@@ -10,6 +10,12 @@ We compared two curated human gene sets from the Human Ageing Genomic Resources 
 
 Cellular senescence is a state of sustained proliferative arrest that can arise after several types of stress. It is relevant to organismal aging, but a senescence phenotype measured in culture and a change in organismal survival are different endpoints. GenAge Human curates human candidate genes using evidence that can include model-organism studies. CellAge curates perturbation evidence on cellular senescence in human cells. Comparing their membership identifies where the two resources converge and makes it possible to trace selected claims back to experiments. [1–4]
 
+## Related Work
+
+Bonnefous et al. reported 113 shared genes among 303 exploitable human GenAge genes and 852 exploitable CellAge genes in their study of evolutionary origins and protein interaction networks. Their eligibility depended on protein and orthology mapping. Our independent workflow uses pinned HAGR exports and reciprocal NCBI–HGNC validation, then audits GO annotations and selected primary studies. The reported numbers agree on the size of the intersection. The published supplements lack the eligible gene lists needed to verify membership equivalence. [15] [Release and supplement comparison](../docs/related_work.md)
+
+Avelar et al. established CellAge and analyzed senescence-related interaction and co-expression networks. Their tissue analyses distinguish perturbation evidence from age-associated transcript abundance. Our direct BP term counts describe annotations on the shared genes. [3]
+
 ## Research Question and Objectives
 
 Which validated human genes occur in both GenAge Human and CellAge, and which biological processes have direct annotations for those genes?
@@ -130,3 +136,4 @@ After generating the mapping, use `--check` with `harmonize_genes`, `analyze_ove
 12. Bodnar AG et al. Extension of life-span by introduction of telomerase into normal human cells. *Science.* 1998. [DOI 10.1126/science.279.5349.349](https://doi.org/10.1126/science.279.5349.349), [PMID 9454332](https://pubmed.ncbi.nlm.nih.gov/9454332/).
 13. Egan ED and Collins K. Specificity and stoichiometry of subunit interactions in the human telomerase holoenzyme assembled in vivo. *Mol Cell Biol.* 2010. [DOI 10.1128/MCB.00151-10](https://doi.org/10.1128/MCB.00151-10), [PMID 20351177](https://pubmed.ncbi.nlm.nih.gov/20351177/).
 14. Ghosh S et al. Haploinsufficiency of *Trp53* dramatically extends the lifespan of *Sirt6*-deficient mice. *eLife.* 2018. [DOI 10.7554/eLife.32127](https://doi.org/10.7554/eLife.32127), [PMID 29474172](https://pubmed.ncbi.nlm.nih.gov/29474172/).
+15. Bonnefous H et al. Most genetic roots of fungal and animal aging are hundreds of millions of years old according to phylostratigraphy analyses of aging networks. *GeroScience.* 2024. [DOI 10.1007/s11357-024-01234-9](https://doi.org/10.1007/s11357-024-01234-9), [PMID 38862758](https://pubmed.ncbi.nlm.nih.gov/38862758/).

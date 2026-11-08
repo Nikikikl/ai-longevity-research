@@ -1,13 +1,39 @@
 # AI & Longevity: Exploring Genes Associated with Human Aging
 
+**Version 1.1** · Descriptive research and evidence review
+
 > Which human genes are represented in both the GenAge Human and CellAge databases, and which biological processes are associated with these genes?
 
-This independent computational biology project compares two curated Human Ageing Genomic Resources (HAGR) exports. GenAge Human assembles candidate genes for human aging, drawing on human and model-organism evidence. CellAge records evidence from perturbation experiments on cellular senescence in human cells.
-
-The initial descriptive study is complete through Phase 5B. It validates gene identifiers, quantifies the overlap, summarizes direct Gene Ontology Biological Process annotations, and reviews primary evidence for TP53, CDKN2A and TERT. The project did not train a machine-learning model or perform statistical enrichment tests.
+This independent reproducible reanalysis and evidence review compares two Human Ageing Genomic Resources (HAGR) exports. GenAge Human curates candidates for human aging and can draw on model-organism evidence. CellAge curates perturbation experiments on cellular senescence in human cells. Comparing them shows where these kinds of evidence overlap and lets readers trace selected records to the underlying experiments.
 
 - [Research report v1](reports/research_report_v1.md) covers the methods, results, evidence and limitations for academic review.
 - [One-page research brief](reports/research_brief.md) summarizes the study for prospective internship supervisors.
+- [Related work](docs/related_work.md) compares the published overlap, documents the limits of gene-by-gene verification and outlines a follow-up.
+
+## Main results
+
+| Measure | Result |
+| --- | ---: |
+| Confirmed GenAge Human / CellAge genes | 307 / 865 |
+| Shared genes | 113 |
+| GenAge Human only / CellAge only | 194 / 752 |
+| Union | 1,059 |
+| Jaccard similarity | 0.106704 |
+| CellAge records linked to shared genes | 125 |
+| Shared genes with direct GO Biological Process annotations | 113 / 113 |
+| Distinct direct positive terms, all eligible codes / excluding IEA | 1,805 / 1,532 |
+
+![Confirmed GenAge Human only, shared, and CellAge only gene counts](reports/gene_overlap.svg)
+
+The [GO figure](reports/go_biological_processes.svg) shows the most frequent direct terms by distinct gene count with IEA included. The [term table](reports/go_process_summary.csv) also reports counts without IEA.
+
+## Methods and interpretation
+
+The workflow verifies the input checksums, validates NCBI Gene IDs and HGNC mappings, intersects the confirmed gene sets, and joins shared genes to direct GO annotations using exact UniProtKB accessions. It retains the source record ordinals and GAF line numbers. The [case studies](reports/gene_case_studies.md) trace TP53, CDKN2A and TERT records to the primary studies and document what each model and perturbation supports.
+
+Bonnefous et al. (2024) previously reported 113 shared genes in a study of evolutionary origins and protein networks. Their 303 exploitable GenAge Human and 852 exploitable CellAge genes followed different eligibility rules. The supplements do not provide a gene-level list for this comparison, so the shared count agrees and membership equivalence remains unverified. The contribution here is the pinned workflow and evidence audit. [Bonnefous et al.](https://doi.org/10.1007/s11357-024-01234-9), [comparison and release details](docs/related_work.md#bonnefous-et-al-2024)
+
+Coverage depends on the source snapshots, curation and evidence filters. One conflicting FNTB / CHURC1-FNTB mapping remains unresolved and neither candidate changes the overlap. GO frequencies are descriptive. The project did not test statistical enrichment or train a machine-learning model. Cell-culture perturbations and model-organism findings do not establish effects on human lifespan. A proposed follow-up would test donor-age associations for the fixed gene set in two independent human fibroblast RNA-seq cohorts. [Proposed Phase 7](docs/related_work.md#proposed-phase-7--replication-across-human-fibroblast-rna-seq-cohorts)
 
 ## Official inputs
 
@@ -18,7 +44,13 @@ The initial descriptive study is complete through Phase 5B. It validates gene id
 
 The actual archives determine the parsing formats. The [HAGR download index](https://genomics.senescence.info/download.html) describes different delimiters and links to a separate CellAge expression-signature export, which is outside this study. Both URLs point to the current stable downloads. The build labels above were checked against the release notes bundled in the acquired archives. The SHA-256 records identify the exact snapshots even if the URLs later serve different files.
 
-HAGR requires attribution under its published terms and asks users to contact the maintainers before making many queries or retrieving large volumes. Cite de Magalhães et al. (2024) for HAGR and Avelar et al. (2020) for CellAge as listed in the [HAGR terms and citation guidance](https://genomics.senescence.info/legal.html). See the GenAge release notes for the GenAge-specific citation.
+Identifier harmonization uses the HGNC quarterly complete set dated 2026-10-06 and the NCBI Gene daily export with HTTP Last-Modified 2026-11-07T08:31:40Z. Annotation uses GO archive release 2026-08-05 with ontology data version 2026-07-26. The manifests distinguish file versions from retrieval timestamps. [HGNC and NCBI manifest](data/reference_provenance.json), [GO manifest](data/go_provenance.json)
+
+## Source attribution and reuse
+
+HAGR publishes its attribution terms under CC BY 3.0 Unported and asks users to contact the maintainers before making many queries or retrieving large volumes. The report cites de Magalhães et al. (2024) for HAGR, Tacutu et al. (2018) for GenAge and Avelar et al. (2020) for CellAge. The shared gene table harmonizes identifiers and summarizes source records. [HAGR terms and citation guidance](https://genomics.senescence.info/legal.html), [report references](reports/research_report_v1.md#references)
+
+GO data from archive release 2026-08-05 are © Gene Ontology Consortium, available under CC BY 4.0. The project filtered, joined and summarized the source data in derived tables and a figure. Original project code and prose have no explicit reuse license in this repository. Source-data terms apply to their respective materials. [GO attribution and license](reports/go_biological_processes.md#provenance-and-outputs), [GO citation policy](https://geneontology.org/docs/go-citation-policy/)
 
 ## Reproduce the inventory
 
