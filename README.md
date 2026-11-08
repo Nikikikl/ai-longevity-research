@@ -1,22 +1,16 @@
 # AI & Longevity: Exploring Genes Associated with Human Aging
 
-**Completed v1.1** · Descriptive research and evidence review
+**Experimental v2.0 complete** · [Final scientific report](reports/research_report_v2.md) · [Internship research brief](reports/research_brief.md)
 
-**Experimental v2.0 · Phase 7A** evaluates fibroblast RNA-seq in two cohorts. Of the 113 shared genes, 109 could be tested in both. Their cross-cohort signal did not exceed the matched control benchmark. Ridge predicted chronological age better than constant predictions within discovery, with errors comparable to expression-matched random panels. [Frozen protocol](docs/phase7_research_protocol.md), [data and prior work](reports/phase7_data_feasibility.md), [baseline results](reports/phase7_baseline_results.md)
+The project links aging and cellular senescence records to their source evidence, tests a fixed gene panel in two human fibroblast RNA-seq cohorts, and evaluates a deterministic research lookup. It documents where curated evidence agrees, how the panel performed against matched controls and where the available experiments leave claims unresolved.
 
-**Experimental v2.0 · Phase 7B** adds an evidence integrity ledger and a small deterministic Q&A benchmark. The manual audit covers TP53, CDKN2A and TERT. The lookup distinguishes database rows, cited experiments and missing outcomes. [Protocol](docs/phase7b_evidence_protocol.md), [audit](reports/phase7b_evidence_audit.md), [benchmark results](reports/phase7b_benchmark_results.md)
-
-**Experimental v2.0 · Phase 7C** tests the frozen lookup and a terminology normalizer on 24 held-out prompts. Exact answers rose from 5/24 to 18/24. The comparison covers new wording over the existing three-gene audit. [Evaluation protocol](docs/phase7c_evaluation_protocol.md), [results](reports/phase7c_results.md)
-
-**Experimental v2.0 · Phase 7D** adds a focused evidence audit of FOXO3 and SIRT6. It traces the curated claims to cell, genotype and mouse studies and compares their endpoints with Phase 7A. [Case studies](reports/phase7d_case_studies.md) · [Ledger and lookup](reports/phase7b_evidence_audit.md#phase-7d-extension)
-
-> Which human genes are represented in both the GenAge Human and CellAge databases, and which biological processes are associated with these genes?
-
-This independent reproducible reanalysis and evidence review compares two Human Ageing Genomic Resources (HAGR) exports. GenAge Human curates candidates for human aging and can draw on model-organism evidence. CellAge curates perturbation experiments on cellular senescence in human cells. Comparing them shows where these kinds of evidence overlap and lets readers trace selected records to the underlying experiments.
-
-- [Research report v1](reports/research_report_v1.md) covers the methods, results, evidence and limitations for academic review.
-- [One-page research brief](reports/research_brief.md) summarizes the study for prospective internship supervisors.
-- [Related work](docs/related_work.md) compares the published overlap, documents the limits of gene-by-gene verification and outlines a follow-up.
+| Stage | What to read |
+| --- | --- |
+| **v1.1 · Descriptive analysis** | [Original report](reports/research_report_v1.md) · [Prior art and source comparison](docs/related_work.md) |
+| **7A · RNA-seq** | [Frozen protocol](docs/phase7_research_protocol.md) · [Cohorts and inputs](reports/phase7_data_feasibility.md) · [Association and prediction results](reports/phase7_baseline_results.md) |
+| **7B · Evidence integrity** | [Audit and ledger](reports/phase7b_evidence_audit.md) · [Development benchmark](reports/phase7b_benchmark_results.md) |
+| **7C · Held-out evaluation** | [Evaluation protocol](docs/phase7c_evaluation_protocol.md) · [Baseline and normalized lookup results](reports/phase7c_results.md) |
+| **7D · Focused expansion** | [FOXO3 and SIRT6 case studies](reports/phase7d_case_studies.md) · [Extension ledger and verification](reports/phase7b_evidence_audit.md#phase-7d-extension) |
 
 ## v1.1 results
 
@@ -51,6 +45,9 @@ Use Python 3.11 or newer from the repository root. This phase uses tracked proje
 python3 -B -m scripts.phase7b_ledger --check
 python3 -B -m scripts.phase7b_qa 'Where is PMID 9454332 cited across CellAge and GO in the audit?'
 python3 -B -m scripts.phase7b_score
+python3 -B -m scripts.phase7c_score baseline heldout
+python3 -B -m scripts.phase7c_score candidate heldout
+python3 -B -m scripts.phase7d_evidence --score
 ```
 
 The [ledger](reports/phase7b_evidence_ledger.csv) preserves exact source rows and separates PMID reuse from what the papers establish about shared or distinct experiments. The [22-question benchmark](benchmarks/phase7b_questions.json) checks exact facts, references, evidence type and abstention. It is a development set for narrow English queries and does not measure generalization to other genes or literature. No language model was trained or used by the lookup.

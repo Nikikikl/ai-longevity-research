@@ -1,26 +1,26 @@
-# Human Aging and Cellular Senescence Genes
+# Research brief · AI for Science and computational biology
 
-*Research brief for prospective master's research internship supervisors*
+*Experimental v2.0 · For prospective research internship supervisors*
 
-## Motivation
+## Research question
 
-Cellular senescence is relevant to aging, but a change in cell proliferation in culture answers a different question from a change in organismal survival. This project examines where two curated gene sets overlap and how much of the shared evidence can be traced to a defined experiment.
+Can evidence curated for cellular senescence and organismal aging identify a gene panel with reproducible age-associated expression in human fibroblasts? A second question is whether a small research assistant can trace each answer to the source record and distinguish an unmeasured outcome from a measured negative.
 
-## Data and workflow
+## Methods and contribution
 
-We used HAGR GenAge Human Build 21 (2023-08-28), CellAge gene manipulations Build 3 (2023-04-23) and GO archive release 2026-08-05. We validated human Gene IDs and symbols against pinned HGNC and NCBI Gene snapshots, computed the intersection, and summarized direct GO Biological Process annotations with and without electronically inferred annotations (IEA). We then traced CellAge and selected GO citations for TP53, CDKN2A and TERT. [Full report and input versions](research_report_v1.md)
+The project connects checksum-pinned GenAge, CellAge, HGNC, NCBI Gene and Gene Ontology inputs with two public GEO fibroblast RNA-seq cohorts. The workflow resolves gene identifiers, records exclusions, compares a fixed panel with expression-matched controls, and traces selected literature claims to their interventions and endpoints. A deterministic lookup returns exact citations and evidence types. These are examples of provenance tracking, statistical evaluation and benchmark design on a scientific problem. [Consolidated report and inputs](research_report_v2.md)
 
-## Main results
+## Selected results
 
-- **113 shared genes** among 307 confirmed GenAge Human and 865 confirmed CellAge genes. The union contained 1,059 genes (Jaccard similarity 0.106704).
-- **125 CellAge records** map to the shared genes. A record can reuse a publication. One unresolved CellAge mapping, FNTB / CHURC1-FNTB, was excluded. Neither candidate assignment changes the shared count.
-- **113 of 113 shared genes** have direct GO Biological Process coverage under both evidence policies. Distinct terms decrease from 1,805 to 1,532 after removing IEA.
-- **Three case studies show distinct experimental outcomes.** Restoring p53 in EJ carcinoma cells and delivering p16 to normal TIG-3 fibroblasts induced senescence phenotypes. Expressing hTERT in two initially telomerase-negative human cell types delayed replicative senescence. The same TERT study appears in both CellAge and GO. [Evidence matrix](gene_evidence_matrix.csv)
+| Question | Result |
+| --- | --- |
+| Where do the curated sets overlap? | **113 shared genes** among 307 confirmed GenAge genes and 865 confirmed CellAge genes. Bonnefous et al. reported the same count under different eligibility rules. Gene-level equivalence remains unverified. |
+| Does the panel show a stronger reproducible RNA-seq age signal? | **109 genes** could be tested in both cohorts. The panel replication score was **0.00464**, below the **0.00685** matched-panel median. Within discovery, Ridge reached **15.34 years MAE**, compared with **20.38** for median age and **15.03** for the median matched Ridge comparator. |
+| What do the curated labels establish? | An audit of five genes found cases where several records cite one experiment and where an annotation is more specific than the measured endpoint. For SIRT6, acute depletion increased senescence markers in cultured chondrocytes. Replicative exhaustion was unestablished in the reviewed methods. |
+| Does the evidence lookup handle new wording? | Terminology normalization improved exact answers from **5/24 to 18/24** on held-out prompts. The remaining misses were generic abstentions, including questions combining evidence across sources. |
 
-## Scientific limitations
+## Limits and research interests
 
-The counts depend on database inclusion rules, curation and annotation coverage. They describe overlap and annotation frequency. The study did not test enrichment or train a machine-learning model. Culture results and model-specific animal survival results do not establish effects on human lifespan.
+The RNA-seq analysis concerns donor chronological age in cultured fibroblasts. It leaves external prediction performance and intervention effects on human lifespan unresolved. The held-out benchmark is small, uses a common evidence corpus and has no external reviewer.
 
-## Future research directions
-
-A follow-up could audit more of the 125 CellAge records by unique publication, cell type, perturbation and endpoint. Comparing those strata would help identify which conclusions have independent support across cell models. [Methods, figures and references](research_report_v1.md)
+A follow-up research question is whether a comparable independent cohort with recorded culture passage and technical covariates would reproduce the association result. The accompanying report gives source locators, commands and limitations for assessing the work. [Full scientific report](research_report_v2.md) · [Evidence audit and lookup](phase7b_evidence_audit.md#phase-7d-extension)
