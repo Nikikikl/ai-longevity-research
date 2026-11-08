@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 960 544">
+  <title id="title">Top direct GO Biological Process annotations</title>
+  <desc id="desc">113 of 113 shared genes covered. Bars count unique genes.</desc>
+  <rect width="100%" height="100%" fill="white"/>
+  <g fill="#172b3a" font-family="sans-serif">
+    <text x="20" y="29" font-size="21" font-weight="bold">Top direct GO Biological Process annotations</text>
+    <text x="20" y="53" font-size="14">113 of 113 shared genes covered · bars show unique genes · IEA included</text>
+    <text x="20" y="78" font-size="13">positive regulation of transcription by RNA polymerase II</text>
+    <text x="20" y="92" font-size="13">(GO:0045944)</text>
+    <rect x="520" y="65" width="350.00" height="20" fill="#116d68"/>
+    <text x="879.00" y="80" font-size="14">50</text>
+    <text x="20" y="116" font-size="13">negative regulation of transcription by RNA polymerase II</text>
+    <text x="20" y="130" font-size="13">(GO:0000122)</text>
+    <rect x="520" y="103" width="245.00" height="20" fill="#116d68"/>
+    <text x="774.00" y="118" font-size="14">35</text>
+    <text x="20" y="154" font-size="13">positive regulation of DNA-templated transcription (GO:0045893)</text>
+    <rect x="520" y="141" width="231.00" height="20" fill="#116d68"/>
+    <text x="760.00" y="156" font-size="14">33</text>
+    <text x="20" y="192" font-size="13">negative regulation of apoptotic process (GO:0043066)</text>
+    <rect x="520" y="179" width="224.00" height="20" fill="#116d68"/>
+    <text x="753.00" y="194" font-size="14">32</text>
+    <text x="20" y="230" font-size="13">regulation of DNA-templated transcription (GO:0006355)</text>
+    <rect x="520" y="217" width="217.00" height="20" fill="#116d68"/>
+    <text x="746.00" y="232" font-size="14">31</text>
+    <text x="20" y="268" font-size="13">regulation of transcription by RNA polymerase II (GO:0006357)</text>
+    <rect x="520" y="255" width="217.00" height="20" fill="#116d68"/>
+    <text x="746.00" y="270" font-size="14">31</text>
+    <text x="20" y="306" font-size="13">positive regulation of gene expression (GO:0010628)</text>
+    <rect x="520" y="293" width="203.00" height="20" fill="#116d68"/>
+    <text x="732.00" y="308" font-size="14">29</text>
+    <text x="20" y="344" font-size="13">positive regulation of cell population proliferation (GO:0008284)</text>
+    <rect x="520" y="331" width="182.00" height="20" fill="#116d68"/>
+    <text x="711.00" y="346" font-size="14">26</text>
+    <text x="20" y="382" font-size="13">negative regulation of DNA-templated transcription (GO:0045892)</text>
+    <rect x="520" y="369" width="182.00" height="20" fill="#116d68"/>
+    <text x="711.00" y="384" font-size="14">26</text>
+    <text x="20" y="420" font-size="13">signal transduction (GO:0007165)</text>
+    <rect x="520" y="407" width="154.00" height="20" fill="#116d68"/>
+    <text x="683.00" y="422" font-size="14">22</text>
+    <text x="20" y="458" font-size="13">chromatin remodeling (GO:0006338)</text>
+    <rect x="520" y="445" width="140.00" height="20" fill="#116d68"/>
+    <text x="669.00" y="460" font-size="14">20</text>
+    <text x="20" y="496" font-size="13">DNA damage response (GO:0006974)</text>
+    <rect x="520" y="483" width="140.00" height="20" fill="#116d68"/>
+    <text x="669.00" y="498" font-size="14">20</text>
+  </g>
+</svg>

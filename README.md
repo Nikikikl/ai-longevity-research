@@ -64,3 +64,15 @@ python3 -B -m unittest discover -s tests -v
 ```
 
 The [overlap report](reports/gene_overlap.md) includes the confirmed counts, the [shared gene table](reports/gene_overlap_genes.csv), and a [bar chart](reports/gene_overlap.svg). The shared gene table links each gene to its original GenAge Human and CellAge records. The report keeps the unresolved CellAge mapping separate and tests both hypothetical assignments.
+
+## Reproduce the GO Biological Process annotation
+
+Keep the pinned HGNC snapshot and the Phase 2 mapping available. Save the two official GO files listed in [data/go_provenance.json](data/go_provenance.json) under `data/raw/references/` with their original filenames. The script checks the GO and HGNC file fingerprints and reconstructs the Phase 3 gene table for a byte-for-byte input check.
+
+```sh
+python3 -B -m scripts.annotate_go
+python3 -B -m scripts.annotate_go --check
+python3 -B -m unittest discover -s tests -v
+```
+
+The [GO BP report](reports/go_biological_processes.md) documents the release, accession mapping, evidence filters, and coverage. The [annotation table](reports/go_gene_annotations.csv) preserves source line numbers and excluded mapped BP rows. The [term summary](reports/go_process_summary.csv) and [SVG](reports/go_biological_processes.svg) describe direct annotations by unique gene count. Raw GO files remain outside Git.
