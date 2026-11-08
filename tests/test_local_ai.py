@@ -19,6 +19,41 @@ def chat_response(answer, source_ids=(), *, status="answered"):
 
 
 class RetrievalTests(unittest.TestCase):
+    def test_overlap_questions_prefer_the_comparison_and_prior_art(self):
+        for question, first in (
+            ("что за результат в 113 генов мы нашли", "V2-L7-L7"),
+            ("Что означает пересечение GenAge и CellAge?", "V2-L11-L11"),
+            ("What did the 113 shared genes tell us?", "V2-L11-L11"),
+        ):
+            with self.subTest(question=question):
+                passages = local_retrieval.retrieve(question)
+                self.assertEqual(passages[0].id, first)
+                self.assertTrue({"V2-L7-L7", "V2-L11-L11", "V2-L15-L15"} <= {p.id for p in passages})
+
+    def test_project_summary_keeps_the_overlap_and_panel_result_together(self):
+        for question in (
+            "Какие главные результаты нашего исследования?",
+            "What were the main findings of our research?",
+        ):
+            with self.subTest(question=question):
+                passage = local_retrieval.retrieve(question)[0]
+                self.assertEqual(passage.id, "V2-L7-L7")
+                self.assertIn("matching a previously published count", passage.text)
+                self.assertIn("did not outperform expression-matched controls", passage.text)
+
+    def test_gene_overview_includes_distinct_evidence_types(self):
+        for question in ("суть гена foxo3", "What is the function of FOXO3?"):
+            with self.subTest(question=question):
+                passages = local_retrieval.retrieve(question)
+                self.assertEqual(passages[0].id, "V2-L52-L52")
+                self.assertTrue({"P7D-L16-L16", "P7D-L18-L18"} <= {p.id for p in passages})
+        focused = local_retrieval.retrieve("What is the role of FOXO3 in human longevity?")
+        self.assertEqual(focused[0].id, "P7D-L18-L18")
+
+    def test_113_gene_panel_with_an_explicit_rna_seq_question_keeps_specific_evidence(self):
+        passages = local_retrieval.retrieve("Did the 113-gene RNA-seq panel outperform matched controls?")
+        self.assertIn("V2-L23-L23", {p.id for p in passages})
+
     def test_relevance_and_determinism(self):
         cases = (
             ("What happened when researchers restored p53 in EJ carcinoma cells?", "GENES-L31-L31"),
@@ -66,12 +101,29 @@ class RetrievalTests(unittest.TestCase):
 
 
 class LocalAnswerTests(unittest.TestCase):
+    @patch("scripts.local_ai.request")
+    def test_russian_cell_terminology_is_scoped_to_relevant_questions(self, request):
+        for question, expect_glossary in (
+            ("Что показал нокдаун SIRT6 в хондроцитах?", True),
+            ("Что означает пересечение GenAge и CellAge?", False),
+        ):
+            with self.subTest(question=question):
+                request.side_effect = [
+                    {"models": [{"name": local_ai.MODEL}]},
+                    chat_response("Недостаточно данных.", status="insufficient_evidence"),
+                ]
+                local_ai.answer_local(question)
+                system_prompt = request.call_args.args[2]["messages"][0]["content"]
+                self.assertEqual("повреждение ДНК" in system_prompt, expect_glossary)
+
     @patch("scripts.local_ai.HTTPConnection")
     def test_unrelated_question_abstains_without_inference(self, connection):
-        result = local_ai.answer_local("How long does it take to bake bread?", [FOXO3_QUESTION])
-        self.assertEqual(result.status, "insufficient_evidence")
-        self.assertEqual(result.passages, ())
-        self.assertEqual(result.cited, ())
+        for question in ("How long does it take to bake bread?", "пока", "Какие главные результаты исследования сна?"):
+            with self.subTest(question=question):
+                result = local_ai.answer_local(question, [FOXO3_QUESTION])
+                self.assertEqual(result.status, "insufficient_evidence")
+                self.assertEqual(result.passages, ())
+                self.assertEqual(result.cited, ())
         connection.assert_not_called()
 
     @patch("scripts.local_ai.request")

@@ -5,7 +5,7 @@ from http.client import HTTPConnection, HTTPException
 import json
 import re
 
-from scripts.local_retrieval import FOLLOW_UP, Passage, retrieve
+from scripts.local_retrieval import FOLLOW_UP, Passage, retrieve, terms
 
 MODEL = "qwen3:1.7b"
 OLLAMA_HOST = "127.0.0.1"
@@ -29,8 +29,11 @@ the answer. Use plain text without citations, brackets, links, or restating the 
 CORRECTION_PROMPT = """
 The previous response failed validation. Return one complete, brief JSON object.
 Select supporting IDs only from the supplied passages and put them only in source_ids."""
-RUSSIAN_ANSWER = """Ответьте на русском языке, в двух коротких предложениях.
-Дайте прямой ответ на русском. Назовите измеренный результат и предел вывода по нему."""
+RUSSIAN_ANSWER = ("Ответьте кратко по-русски. Укажите только факты из отрывков. "
+                  "Различайте результаты наблюдений, экспериментов и сравнений.")
+RUSSIAN_CELL_TERMS = """Ответьте на русском языке, в двух коротких предложениях.
+Дайте прямой ответ на русском. Назовите измеренный результат и предел вывода по нему.
+Сохраняйте обозначение SA-β-gal. Пишите «повреждение ДНК» и «сенесценция»."""
 ANSWER_STATUSES = ("answered", "insufficient_evidence")
 INLINE_REFERENCE = re.compile(r"https?://|[\[\]]|\b[A-Z][A-Z0-9]*-L\d+(?:-L\d+)?\b", re.IGNORECASE)
 
@@ -149,7 +152,9 @@ def answer_local(question, prior_questions=()):
         context["earlier_questions"] = history
     context["question"] = question
     user_message = json.dumps(context, ensure_ascii=False)
-    language = RUSSIAN_ANSWER if russian else "Write in the language of the question."
+    language = "Write in the language of the question."
+    if russian:
+        language = RUSSIAN_CELL_TERMS if terms(question) & {"knockdown", "senescence"} else RUSSIAN_ANSWER
     system_prompt = f"{SYSTEM_PROMPT}\n{language}"
     sources = {passage.id: passage for passage in passages}
     properties = {

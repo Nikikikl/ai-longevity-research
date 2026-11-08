@@ -50,4 +50,24 @@ The final run submitted each question in a fresh conversation through Streamlit'
 
 Earlier structured-output prompt variants produced valid IDs alongside a claim that SIRT6 knockdown proved replicative senescence and an explanation that confused missing TERT expression correlations with human lifespan. These errors informed the final prompt and illustrate why ID validation alone cannot establish scientific support. This four-question check measures behavior on these prompts only. Automated tests separately exercise retrieval, request settings, transport failures, invalid IDs, correction limits and Streamlit behavior with mocks.
 
+### Multilingual retrieval check, 2026-11-09
+
+The earlier retriever found only one matching term, `113`, in “что за результат в 113 генов мы нашли”. The Russian words for genes and findings did not match the English reports, and the non-gene-symbol path required two matching terms. The short FOXO3 question matched the symbol and ranked a detailed knockdown passage ahead of the consolidated evidence summary.
+
+The revised retriever normalizes common Russian inflections and English synonyms. Broad wording about 113 genes favors the consolidated comparison and prior art. Specific terms such as RNA-seq and panel keep a question focused on the association analysis. Broad gene questions favor a named synopsis when the reports provide one. Generic terms alone are insufficient unless the question asks for the project summary.
+
+Both runs used the Streamlit AppTest adapter with a fresh conversation for each question and the real Ollama 0.40.15 API. The model was `qwen3:1.7b` (ID `8f68893c685c`). Source IDs below are the model's selections. The application did not add citations.
+
+| Question | Before | After and manual review |
+| --- | --- | --- |
+| что за результат в 113 генов мы нашли | No passages; abstained. | `V2-L7-L7`. Correctly identified the shared count and said that it agreed with a previously published count. |
+| Что означает пересечение GenAge и CellAge? | Cited extension audit and case-study passages. Gave a vague account without the count. | `V2-L11-L11`. Correctly gave 113 shared genes out of sets of 307 and 865. It overstated what the overlap shows about source compatibility. |
+| What did the 113 shared genes tell us? | `V2-L11-L11`. Introduced a GO annotation claim that the cited passage did not support. | `V2-L11-L11`. Correctly described the overlap and left its functional significance open. It omitted the prior publication, although that evidence was retrieved. |
+| Какие главные результаты нашего исследования? | No passages; abstained. | `V2-L7-L7`. Included the overlap and the panel comparison, but overstated the negative finding as an absence of statistically significant results overall. |
+| суть гена foxo3 | `P7D-L16-L16`. Described the cell experiment alone. | `V2-L52-L52`. Retrieved the culture and genotype studies as well (`P7D-L16-L16` and `P7D-L18-L18`). The answer mentioned both lines of evidence but did not name the transcription-factor function, overgeneralized regulation of senescence and imprecisely described the Japanese American cohort. |
+| Why are TERT's Phase 7A correlations missing? | `P7A-L17-L17`. Correct expression-filter explanation. | Same source and correct explanation. |
+| Что показал нокдаун SIRT6 в хондроцитах? | `P7D-L22-L22`. Reported the marker changes and reduced proliferation using several mistranslated terms. | Same source. Kept the marker name and used clearer Russian for DNA damage and reduced proliferation. The answer omitted p16 and expressed the limitation too broadly. The separate question about proof of replicative senescence correctly rejected that conclusion. |
+| пока | No passages; abstained without inference. | Same. |
+| How many years does TERT gene therapy add to the human lifespan? | `insufficient_evidence`, no cited IDs. | Same. The model did not estimate a lifespan effect. |
+
 The corpus is limited to selected project reports and their scope. Lexical matching can miss paraphrases and vocabulary outside the indexed text. The Russian retrieval vocabulary covers a small set of common terms. The prototype checks whether citation IDs were supplied to the model. Scientific interpretation still requires reading the cited sources and checking the study design, endpoint and population.
