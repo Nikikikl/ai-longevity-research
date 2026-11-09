@@ -103,6 +103,64 @@ class RetrievalTests(unittest.TestCase):
 
 class LocalAnswerTests(unittest.TestCase):
     @patch("scripts.local_ai.request")
+    def test_phase7a_panel_counts_keep_their_denominators(self, request):
+        for question in (
+            "How many of the original panel genes were eligible in both RNA-seq cohorts, "
+            "and what did that comparison actually measure?",
+            "How many of the 113 genes passed eligibility in both cohorts?",
+            "What does 63 out of 109 mean?",
+            "Did only 63 genes pass the expression filter?",
+            "В фазе 7А чем 109 генов, прошедших отбор, отличаются от 63 генов с совпавшим направлением связи?",
+        ):
+            with self.subTest(question=question):
+                result = local_ai.answer_local(question)
+                self.assertEqual(result.status, "answered")
+                if question.startswith("В"):
+                    self.assertIn("109 из 113", result.text)
+                    self.assertIn("63 из 109", result.text)
+                else:
+                    self.assertIn("109 of 113", result.text)
+                    self.assertIn("63 of 109", result.text)
+                self.assertTrue({"V2-L21-L21", "V2-L23-L23"} <= {p.id for p in result.cited})
+                if "actually measure" in question:
+                    self.assertIn("donor chronological age", result.text)
+                    self.assertIn("expression abundance and detection", result.text.casefold())
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
+    def test_phase7a_panel_methods_distinguish_outcome_and_matching(self, request):
+        for question in (
+            "Was chronological age or expression abundance the outcome of the Phase 7A association analysis?",
+            "What variables were used to match the control panels?",
+        ):
+            with self.subTest(question=question):
+                result = local_ai.answer_local(question)
+                self.assertEqual(result.status, "answered")
+                self.assertIn("donor chronological age", result.text)
+                self.assertIn("expression abundance and detection", result.text.casefold())
+                self.assertIn("sequencing platform in discovery", result.text)
+                self.assertTrue({"V2-L21-L21", "V2-L23-L23", "P7A-L34-L34"} <= {p.id for p in result.cited})
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
+    def test_phase7a_matched_comparison_reports_the_frozen_rule_and_scope(self, request):
+        result = local_ai.answer_local("What did the Phase 7A matched-panel comparison find, and what are its limitations?")
+        self.assertEqual(result.status, "answered")
+        for text in ("0.00464", "0.00685", "prespecified decision rule", "these two cohorts", "co-expression"):
+            self.assertIn(text, result.text)
+        self.assertEqual({p.id for p in result.cited}, {"V2-L23-L23", "P7A-L34-L34"})
+        request.assert_not_called()
+
+    def test_phase7a_panel_route_leaves_unrelated_metrics_and_scopes_alone(self):
+        for question in (
+            "What does 22 out of 30 mean?",
+            "What variables were used to match the control panels in a mouse experiment?",
+            "Did Phase 7A Ridge prediction outperform expression-matched panels?",
+        ):
+            with self.subTest(question=question):
+                self.assertIsNone(local_ai.phase7a_panel_answer(question, False))
+
+    @patch("scripts.local_ai.request")
     def test_phase7a_missing_estimates_use_the_frozen_ledger(self, request):
         cases = (
             ("В таблице Phase 7A для TERT пустые значения. Их надо читать как нулевую корреляцию?",
@@ -164,7 +222,8 @@ class LocalAnswerTests(unittest.TestCase):
 
     @patch("scripts.local_ai.HTTPConnection")
     def test_unrelated_question_abstains_without_inference(self, connection):
-        for question in ("How long does it take to bake bread?", "пока", "Какие главные результаты исследования сна?"):
+        for question in ("How long does it take to bake bread?", "What temperature should I use to bake sourdough bread?",
+                         "пока", "Какие главные результаты исследования сна?"):
             with self.subTest(question=question):
                 result = local_ai.answer_local(question, [FOXO3_QUESTION])
                 self.assertEqual(result.status, "insufficient_evidence")

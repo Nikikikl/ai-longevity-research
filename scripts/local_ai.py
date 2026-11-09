@@ -7,7 +7,7 @@ import json
 import re
 
 from scripts.local_retrieval import FOLLOW_UP, ROOT, Passage, read_passages, retrieve, terms
-from scripts.phase7b_qa import ASSOCIATIONS, BASELINE
+from scripts.phase7b_qa import ASSOCIATIONS, BASELINE, Evidence
 
 MODEL = "qwen3:1.7b"
 OLLAMA_HOST = "127.0.0.1"
@@ -120,6 +120,101 @@ def phase7a_correlation_answer(question, russian, passages):
     return LocalAnswer("answered", " ".join(answer), cited, cited)
 
 
+def phase7a_panel_answer(question, russian):
+    """Answer narrow panel questions from the frozen lookup and cited study methods."""
+    q = question.casefold()
+    phase = PHASE7A.search(q)
+    if not phase and re.search(r"\b(?:phase|фаз[аеуы])\s*\d+[a-zа-я]?\b", q):
+        return None
+    if re.search(r"\b(?:ridge|mae|prediction|предсказ\w*)\b", q):
+        return None
+    study = phase or ("panel" in q and re.search(r"\brna[- ]seq\b", q))
+    count = (
+        re.search(r"\b(?:how many|did only|сколько|чем)\b", q)
+        and re.search(r"\b(?:genes?|panel|ген\w*|панел\w*)\b", q)
+        and re.search(r"\b(?:eligib\w*|expression filter|sign agreement|concordant|отбор\w*|совпавш\w*)\b", q)
+    )
+    ratio = re.fullmatch(
+        r"(?:what does|что означает|что значит)\s+(\d+)\s*(?:out of|of|/|из)\s*(\d+)(?:\s+mean)?\??", q
+    )
+    matching = (
+        re.search(r"\b(?:variables|features|covariates|переменн\w*|признак\w*)\b", q)
+        and re.search(r"\b(?:match\w*|подбор\w*|подбира\w*)\b", q)
+        and re.search(r"\b(?:control panels?|контрольн\w*\s+панел\w*)\b", q)
+    )
+    if matching and not study:
+        matching = re.fullmatch(
+            r"(?:what|which) (?:variables|features|covariates) (?:were )?used to match (?:the )?control panels?\??", q
+        )
+    endpoint = study and (count or re.search(r"\b(?:association|correlation|ассоциац\w*|корреляц\w*)\b", q)) and (
+        re.search(r"\b(?:outcome|endpoint|исход\w*|что измер\w*|what did .+ measure)\b", q)
+    )
+    comparison = phase and (
+        re.search(r"\b(?:matched[- ]panels?|expression[- ]matched|подобранн\w*\s+панел\w*)\b", q)
+        and re.search(r"\b(?:comparison|compare|outperform|score|limitations|сравнен\w*|превзош\w*)\b", q)
+    )
+    if not (count or ratio or matching or endpoint or comparison):
+        return None
+
+    answer, source_ids = [], set()
+    if count or ratio or comparison:
+        evidence = Evidence()
+    if count or ratio:
+        eligibility = evidence.association_answer("genes were tested in both cohorts", None)["facts"]
+        signs = evidence.association_answer("sign agreement", None)["facts"]
+        panel, tested, agree = eligibility["panel"], eligibility["tested"], signs["agree"]
+        numbers = {int(value) for value in re.findall(r"\b\d+\b", q)}
+        implicit_count = (panel in numbers and q.rstrip("?").endswith("both cohorts")) or (
+            agree in numbers and q.rstrip("?").endswith("expression filter")
+        )
+        if ratio:
+            count = tuple(map(int, ratio.groups())) in {(agree, tested), (tested, panel)}
+        if count and (study or ratio or implicit_count):
+            answer.append(
+                f"В обеих когортах критериям отбора соответствовали {tested} из {panel} генов панели. "
+                f"У {agree} из {tested} прошедших отбор генов направления связи совпали между когортами."
+                if russian else f"{tested} of {panel} panel genes were eligible in both cohorts. "
+                f"For {agree} of {tested} eligible genes, the estimated associations agreed in direction."
+            )
+            source_ids.update(("V2-L21-L21", "V2-L23-L23"))
+    if endpoint or matching:
+        answer.append(
+            "В Phase 7A оценивали связь экспрессии генов в фибробластах с хронологическим возрастом доноров. "
+            "Частичные корреляции Пирсона рассчитывали отдельно в каждой когорте с поправкой на пол в обеих "
+            "когортах и на платформу секвенирования в поисковой. Уровень экспрессии и частоту обнаружения "
+            "в обеих когортах использовали для подбора контрольных панелей."
+            if russian else "Phase 7A estimated associations between fibroblast gene expression and donor "
+            "chronological age. Partial Pearson correlations were estimated separately in each cohort, adjusting "
+            "for sex in both and sequencing platform in discovery. Expression abundance and detection in both "
+            "cohorts were used to match control panels."
+        )
+        source_ids.update(("V2-L21-L21", "V2-L23-L23", "P7A-L34-L34"))
+    if comparison:
+        facts = evidence.association_answer("replication score", None)["facts"]
+        decision = ("выполнен" if facts["decision_met"] else "не выполнен") if russian else (
+            "met" if facts["decision_met"] else "not met"
+        )
+        answer.append(
+            f"Показатель воспроизводимости панели составил {facts['target']:.5f} при медиане подобранных "
+            f"панелей {facts['matched_median']:.5f}. Заранее заданный критерий превосходства {decision}. "
+            "Вывод относится к этим двум когортам и приблизительному подбору по уровню экспрессии и частоте "
+            "обнаружения. Подбор не гарантирует сопоставимую коэкспрессию."
+            if russian else f"The cross-cohort panel score was {facts['target']:.5f}, versus a matched-panel median "
+            f"of {facts['matched_median']:.5f}. The prespecified decision rule for superiority was {decision}. "
+            "The comparison is limited to these two cohorts and approximate matching on expression abundance "
+            "and detection, with no guarantee of comparable co-expression."
+        )
+        source_ids.update(("V2-L23-L23", "P7A-L34-L34"))
+    if not answer:
+        return None
+    cited = tuple(p for p in read_passages() if p.id in source_ids)
+    if len(cited) != len(source_ids):
+        message = ("В отчётах не хватает источников для ответа о панели Phase 7A." if russian else
+                   "The reports lack the sources needed to answer this Phase 7A panel question.")
+        return LocalAnswer("insufficient_evidence", message)
+    return LocalAnswer("answered", " ".join(answer), cited, cited)
+
+
 def missing_model():
     return OllamaError("missing_model", f"Local model {MODEL} is missing. Run `ollama pull {MODEL}`, then retry.")
 
@@ -207,6 +302,8 @@ def answer_local(question, prior_questions=()):
     try:
         passages = retrieve(question, history)
         if result := phase7a_correlation_answer(question, russian, passages):
+            return result
+        if result := phase7a_panel_answer(question, russian):
             return result
     except OSError:
         return LocalAnswer("evidence_error", "Could not read the tracked research reports. Check your checkout.")
