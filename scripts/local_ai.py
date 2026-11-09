@@ -6,7 +6,7 @@ from http.client import HTTPConnection, HTTPException
 import json
 import re
 
-from scripts.local_retrieval import FOLLOW_UP, ROOT, Passage, read_passages, retrieve, terms
+from scripts.local_retrieval import FOLLOW_UP, MARKDOWN_LINK, ROOT, Passage, read_passages, retrieve, terms
 from scripts.phase7b_qa import ASSOCIATIONS, BASELINE, Evidence
 
 MODEL = "qwen3:1.7b"
@@ -215,6 +215,78 @@ def phase7a_panel_answer(question, russian):
     return LocalAnswer("answered", " ".join(answer), cited, cited)
 
 
+def overlap_prior_art_answer(question, russian):
+    """Answer narrow prior-art questions using the reviewed overlap evidence."""
+    q = question.casefold()
+    if PHASE7A.search(q) or re.search(r"\b(?:go|iea|gene ontology|rna[- ]seq)\b", q):
+        return None
+    words = terms(q)
+    if not (
+        {"genage", "cellage"} <= words
+        or {"113", "gene"} <= words
+        or ("bonnefous" in q and "overlap" in words)
+    ):
+        return None
+    eligibility = re.search(r"\b(?:eligib\w*|inclusion criteria|(?:критери|правил)\w*\s+отбор\w*)\b", q)
+    contribution = re.search(r"\b(?:contribut\w*|вклад\w*)\b", q)
+    prior_art = re.search(
+        r"\b(?:prior|previously|before|new|novel\w*|reproduc\w*|identical|equivalen\w*|membership"
+        r"|раньше|ранее|нов\w*|неизвестн\w*|опубликован\w*|одинаков\w*|состав\w*)\b", q
+    )
+    if not (eligibility or contribution or prior_art):
+        return None
+
+    cited = tuple(p for p in read_passages() if p.id in {"V2-L11-L11", "V2-L15-L15"})
+    if len(cited) != 2:
+        return LocalAnswer("insufficient_evidence", "Недостаточно источников о предыдущей публикации."
+                           if russian else "The reports lack the sources needed for the prior-art comparison.")
+    path = "docs/related_work.md"
+    lines = (ROOT / path).read_text(encoding="utf-8").splitlines()
+    ranges = [(5, 13, "Bonnefous et al. (2024)")]
+    if eligibility:
+        ranges.append((19, 19, "Release labels and eligibility"))
+    if contribution:
+        ranges.append((38, 38, "Contribution and limits"))
+    cited += tuple(
+        Passage(f"RW-L{start}-L{end}", path, heading, start, end,
+                MARKDOWN_LINK.sub(r"\1", "\n".join(lines[start - 1:end])))
+        for start, end, heading in ranges
+    )
+
+    answer = (
+        "Проект воспроизвёл опубликованное ранее число пересечения. Среди 307 генов GenAge Human Build 21 "
+        "и 865 генов CellAge Build 3 нашли 113 общих подтверждённых человеческих генов. "
+        "Bonnefous et al. (2024) уже сообщали о 113, используя 303 гена GenAge и 852 гена CellAge, "
+        "прошедших другой отбор. Открытие ранее неизвестных генов этими данными не установлено. "
+        "В доступных приложениях нет сопоставимых списков, поэтому совпадение списков по отдельным генам не подтверждено."
+        if russian else "The project reproduced a previously published count. The intersection of 307 GenAge Human "
+        "Build 21 genes and 865 CellAge Build 3 genes contained 113 confirmed human genes. "
+        "Bonnefous et al. (2024) already reported 113 from 303 exploitable GenAge and 852 exploitable CellAge genes "
+        "under different eligibility rules. These results do not establish the discovery of previously unknown genes. "
+        "The reviewed supplements lack comparable lists, so gene-by-gene membership equivalence remains unverified."
+    )
+    if eligibility:
+        answer += (
+            " Bonnefous сопоставляли белок-кодирующие гены с белками STRING через Entrez и Ensembl. "
+            "Для эволюционного анализа требовалась ортогруппа OMA известного происхождения, также применялся "
+            "фильтр низкой сложности последовательностей. Наш отбор требовал актуального человеческого NCBI Gene ID "
+            "и взаимного соответствия с HGNC."
+            if russian else " Bonnefous et al. mapped protein-coding genes to STRING through Entrez and Ensembl. "
+            "Their evolutionary analysis required an OMA orthogroup of known origin and applied a low-sequence-complexity "
+            "filter. This project required current human NCBI Gene IDs and reciprocal HGNC agreement."
+        )
+    if contribution:
+        answer += (
+            " Вклад проекта — воспроизводимая работа с закреплёнными снимками. Мы проверяем SHA-256, "
+            "согласуем идентификаторы NCBI и HGNC, документируем исключения и сохраняем номера исходных записей CellAge. "
+            "Анализ прослеживает аннотации и научные утверждения до их источников."
+            if russian else " The project's contribution is a reproducible workflow on pinned snapshots. It verifies "
+            "SHA-256 checksums, harmonizes NCBI and HGNC identifiers, records exclusions and preserves CellAge record "
+            "ordinals. The evidence analysis traces annotations and scientific claims to their sources."
+        )
+    return LocalAnswer("answered", answer, cited, cited)
+
+
 def missing_model():
     return OllamaError("missing_model", f"Local model {MODEL} is missing. Run `ollama pull {MODEL}`, then retry.")
 
@@ -304,6 +376,8 @@ def answer_local(question, prior_questions=()):
         if result := phase7a_correlation_answer(question, russian, passages):
             return result
         if result := phase7a_panel_answer(question, russian):
+            return result
+        if result := overlap_prior_art_answer(question, russian):
             return result
     except OSError:
         return LocalAnswer("evidence_error", "Could not read the tracked research reports. Check your checkout.")

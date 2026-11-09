@@ -103,6 +103,52 @@ class RetrievalTests(unittest.TestCase):
 
 class LocalAnswerTests(unittest.TestCase):
     @patch("scripts.local_ai.request")
+    def test_prior_art_questions_distinguish_count_from_gene_membership(self, request):
+        for question in (
+            "Можно ли считать 113 совпавших генов новым результатом по сравнению с работой Bonnefous?",
+            "Сообщалось ли раньше о пересечении GenAge и CellAge в 113 генов?",
+            "Нашёл ли наш проект 113 ранее неизвестных генов старения?",
+            "Does the same 113-gene count in our overlap and Bonnefous et al. prove that the gene lists are identical?",
+            "How did the GenAge and CellAge eligibility rules used by Bonnefous et al. differ from ours?",
+            "В чём вклад нашего проекта по GenAge и CellAge помимо уже опубликованного числа 113?",
+            "Was the 113-gene GenAge–CellAge overlap count a new finding or a reproduction of prior work?",
+        ):
+            with self.subTest(question=question):
+                result = local_ai.answer_local(question)
+                self.assertEqual(result.status, "answered")
+                self.assertIn("Bonnefous et al. (2024)", result.text)
+                for count in ("113", "307", "865", "303", "852"):
+                    self.assertIn(count, result.text)
+                self.assertTrue(
+                    "membership equivalence remains unverified" in result.text
+                    or "совпадение списков по отдельным генам не подтверждено" in result.text
+                )
+                ids = {p.id for p in result.cited}
+                self.assertTrue({"V2-L11-L11", "V2-L15-L15", "RW-L5-L13"} <= ids)
+                self.assertNotIn("V2-L17-L17", ids)
+                if "eligibility rules" in question:
+                    self.assertIn("RW-L19-L19", ids)
+                    self.assertIn("OMA", result.text)
+                    self.assertIn("HGNC", result.text)
+                if "вклад" in question:
+                    self.assertIn("RW-L38-L38", ids)
+                    self.assertIn("SHA-256", result.text)
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
+    def test_go_question_stays_on_the_model_path_with_its_go_source(self, request):
+        question = "Did all 113 shared genes retain a direct positive GO Biological Process annotation after excluding IEA?"
+        reply = "Yes, all 113 shared genes retained a direct positive annotation."
+        request.side_effect = [
+            {"models": [{"name": local_ai.MODEL}]},
+            chat_response(reply, ["V2-L17-L17"]),
+        ]
+        result = local_ai.answer_local(question)
+        self.assertEqual(result.text, reply)
+        self.assertEqual([p.id for p in result.cited], ["V2-L17-L17"])
+        self.assertEqual(request.call_args.args[0], "/api/chat")
+
+    @patch("scripts.local_ai.request")
     def test_phase7a_panel_counts_keep_their_denominators(self, request):
         for question in (
             "How many of the original panel genes were eligible in both RNA-seq cohorts, "
