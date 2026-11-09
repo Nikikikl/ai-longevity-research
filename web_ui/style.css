@@ -96,6 +96,12 @@
     border-color: var(--edge);
 }
 .st-key-examples [data-testid="stButton"] button:hover { border-color: var(--mint); background: #182936; }
+.st-key-examples button [data-testid="stMarkdownContainer"],
+.st-key-examples button [data-testid="stMarkdownContainer"] p {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+}
 [data-testid="stChatMessage"] {
     background: var(--surface);
     border: 1px solid var(--edge);

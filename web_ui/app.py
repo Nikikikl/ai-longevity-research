@@ -18,19 +18,20 @@ MODE_BADGES = {
 }
 
 SCOPE = {
-    "Research Q&A": "Deterministic lookup for English questions about the RNA-seq panel and the "
-                    "TP53, CDKN2A and TERT audit.",
-    "Evidence records": "Deterministic lookup. Use `record <ID>`, `pmid <number>`, `cellage <gene>` or "
-                        "`association <gene>`. Gene commands cover FOXO3 and SIRT6.",
+    "Research Q&A": "Looks up saved results using fixed rules (deterministic). Ask in English about the gene "
+                    "activity study (RNA-seq) or the evidence for TP53, CDKN2A or TERT.",
+    "Evidence records": "Looks up saved records using fixed rules (deterministic). Try `pmid <number>` for a "
+                        "PubMed paper or `record <ID>` for a specific record. Use `cellage <gene>` or "
+                        "`association <gene>` with FOXO3 or SIRT6.",
     LOCAL_MODE: f"Generated answers use {MODEL} via Ollama. Check each claim against the retrieved passages. "
-                "Valid source IDs can accompany unsupported claims.",
+                "A source link can be valid even if the passage does not support the claim.",
 }
 EXAMPLES = {
-    "Research Q&A": ("What was the sign agreement?",
-                     "TERT partial correlations?"),
-    "Evidence records": ("pmid 25819580", "record GAF:591445"),
-    LOCAL_MODE: ("Why are TERT’s Phase 7A correlations missing?",
-                 "Что показал нокдаун SIRT6 в хондроцитах?"),
+    "Research Q&A": ("How many genes had the same direction of association in both cohorts?",
+                     "Why are the partial correlations for TERT missing?"),
+    "Evidence records": ("cellage SIRT6", "pmid 25819580"),
+    LOCAL_MODE: ("What happened when FOXO3 was knocked down in human dermal fibroblasts?",
+                 "Что показали исследования SIRT6 в культуре клеток человека и по выживаемости мышей?"),
 }
 PLACEHOLDERS = {
     "Research Q&A": "Ask a focused research question…",
@@ -78,11 +79,13 @@ def welcome():
     st.html(
         '<section class="hero"><div class="hero-copy"><span class="eyebrow">AGING GENOMICS / EVIDENCE</span>'
         '<h1>Longevity Research<br>Assistant</h1>'
-        '<p>Explore aging and senescence claims through measured outcomes, curated records and their citations.</p>'
+        '<p>Look up what this project found about genes and aging, then follow the source links '
+        'to see what researchers measured.</p>'
         '</div><span class="hero-art" aria-hidden="true"></span></section>'
     )
     st.html('<div class="examples-heading"><h2>Try an example</h2>'
-            '<p>Each example opens in its evidence mode.</p></div>')
+            '<p>Pick a button to ask the question in the right mode. Research Q&amp;A looks up findings and '
+            'Evidence records finds specific sources. Try either without Ollama, or use Local AI if you have it set up.</p></div>')
     with st.container(key="examples"):
         for column, mode in zip(st.columns(len(MODES), gap="medium"), MODES):
             with column:

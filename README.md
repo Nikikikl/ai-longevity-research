@@ -1,197 +1,122 @@
-# AI & Longevity: Exploring Genes Associated with Human Aging
+# AI & Longevity Research
 
-**Reproducible scientific analysis complete · Local AI experimental** · [Final scientific report](reports/research_report_v2.md) · [Internship research brief](reports/research_brief.md) · [Phase 8A handoff](docs/phase8a_final_status.md)
+This project asks what public gene records and experiments can tell us about human aging. We compared two
+databases, tested whether genes shared by both had a stronger age-related signal in two studies of human
+cells, and traced selected claims back to what researchers measured. You can explore those results with a
+small research assistant that runs on your computer.
 
-The project links aging and cellular senescence records to their source evidence, tests a fixed gene panel in two human fibroblast RNA-seq cohorts, and evaluates a deterministic research lookup. It documents where curated evidence agrees, how the panel performed against matched controls and where the available experiments leave claims unresolved.
+[Read the research story](docs/START_HERE.md) · [Try the assistant locally](docs/TRY_ASSISTANT.md) · [Read the scientific report](reports/research_report_v2.md)
+
+## The research question
+
+A gene is a stretch of DNA that carries instructions a cell can use. Databases can link the same gene to
+aging for different reasons. We wanted to know whether genes listed in both **GenAge Human**, a database
+of aging-related genes, and **CellAge**, a database of experiments on cellular senescence, showed a
+stronger age-related signal than comparable genes. Cellular senescence is a state in which a cell stops
+dividing but remains alive.
 
 ## Key findings
 
-- **113 shared genes** were validated against pinned GenAge Human and CellAge snapshots. This overlap count was reported previously; the contribution here is traceable reconstruction and evidence review.
-- **No fixed-panel advantage in RNA-seq:** 109 genes were evaluable in two healthy fibroblast cohorts, and the cross-cohort age-association score did not exceed expression-matched control panels.
-- **Auditable evidence:** five genes received focused literature review. The deterministic lookup improved from **5/24 to 18/24** correct answers on a small held-out set of unfamiliar phrasings, with important scope limitations.
+- **113 genes appeared in both databases.** Bonnefous et al. (2024) had already published the same count.
+  We reproduced the count with documented inputs and eligibility rules. The published materials do
+  not let us verify whether the two studies identified exactly the same genes.
+  [Prior work and comparison](docs/related_work.md#bonnefous-et-al-2024)
+- **109 of the 113 genes qualified for testing in both groups of donors.** Of those 109, **63** showed
+  the same direction of association with donor age in both groups. For each of those genes, activity
+  tended to rise with age in both groups or fall with age in both groups.
+  [Gene-level results](reports/phase7_baseline_results.md#independent-association-analysis)
+- **The selected gene set did not outperform matched comparison sets under the rule we set before
+  analysis.** We compared it with sets of other genes that had similar levels of measured activity and
+  similar rates of detection. [RNA-seq results and interpretation](reports/phase7_baseline_results.md)
+- **The project found no evidence that an intervention extends human lifespan.** The evidence review
+  found that multiple records sometimes point to a single experiment. To judge a claim, check what the
+  study measured. [Evidence audit](reports/phase7b_evidence_audit.md)
 
-## Quick start
+![Confirmed genes by database membership: 194 GenAge Human only, 113 in both, 752 CellAge only](reports/gene_overlap.svg)
 
-Use Python 3.11+ from the repository root. These lookups use tracked results and the standard library; reproducing the original genomic analyses additionally requires the checksum-pinned source files.
+## How we did the research
 
-```sh
-python3 -B -m scripts.phase7c_qa 'Give the partial r for p53 in each dataset.'
-python3 -B -m scripts.phase7d_evidence 'cellage SIRT6'
-```
+1. **Collected versioned public data.** We recorded the exact files used for each analysis.
+2. **Checked gene identities and counted the overlap.** We matched database entries using official human
+   gene identifiers so that alternate names did not count as separate genes.
+3. **Summarized documented gene functions.** We used Gene Ontology, a shared vocabulary for describing
+   what genes and their products do, to summarize recorded biological processes.
+4. **Tested the shared gene set.** We used RNA sequencing (RNA-seq) measurements as a readout of gene
+   activity in lab-grown human fibroblasts, a type of connective tissue cell. The two datasets come from
+   the public Gene Expression Omnibus (GEO) archive.
+5. **Reviewed original evidence.** We traced selected records for TP53, CDKN2A, TERT, FOXO3 and SIRT6 to
+   their studies and recorded what each study actually tested.
+6. **Built and evaluated the assistant.** We tested whether it could return findings and source links,
+   and whether it could recognize questions outside its scope.
 
-The first command is the terminology-normalized research Q&A interface; the second queries the FOXO3/SIRT6 evidence extension. Both return structured JSON with source references and limitations. **Neither is a trained language model.** See [verification commands](#verify-the-evidence-audit-and-benchmarks) and [the consolidated report](reports/research_report_v2.md).
+[Research story, vocabulary and stage-by-stage sources](docs/START_HERE.md)
 
-## Launch web chat
+## Research Assistant
 
-From the repository root on macOS with Python 3.11 or newer:
-
-```sh
-python3 -m venv .venv/ui
-.venv/ui/bin/python -m pip install -r requirements-ui.txt
-.venv/ui/bin/python -m streamlit run web_ui/app.py
-```
-
-Open [http://127.0.0.1:8501](http://127.0.0.1:8501) and choose a mode.
-
-| Mode | When to use it |
+| Mode | Use it to |
 | --- | --- |
-| **Research Q&A** | Use this deterministic lookup for focused English questions about the Phase 7A RNA-seq panel and the TP53, CDKN2A and TERT evidence audit. |
-| **Evidence records** | Use this deterministic lookup for exact evidence records, PMIDs, or the curated FOXO3 and SIRT6 perturbation and association records. |
-| **Local AI — Experimental** | Use this mode to find and summarize project report excerpts in Russian or English. Check each generated claim against the cited lines before relying on it. |
+| **Research Q&A** | Look up specific findings in English about the gene activity study or the TP53, CDKN2A and TERT evidence review. |
+| **Evidence records** | Find a saved record by ID, a paper by its PubMed ID, or selected FOXO3 and SIRT6 evidence. |
+| **Local AI (Experimental)** | Explore excerpts from five project reports in English or Russian. The optional local model, `qwen3:1.7b`, can generate a summary through Ollama. |
 
-The two deterministic modes work independently of Ollama and evaluate each query on its own. Examples select their mode when clicked. Chat history lasts for the browser session.
+The first two modes use fixed lookup rules and stored evidence. This is what **deterministic** means
+here. They work without an AI model and answer within the project's scope.
 
-The framework-independent [Python interface](scripts/research_assistant.py) is `answer_question(question, mode="research")` for Phase 7C or `mode="records"` for Phase 7D. It returns the same dictionary as the corresponding CLI: `status`, `abstains`, `answer`, `facts`, `evidence_type`, `references`, `limitations`, and optional `details`. Status is one of `answered`, `not_measured`, `insufficient_evidence`, or `unsupported_question`. The interface reads tracked evidence locally and accepts no conversation context.
+### Launch web chat
+
+The assistant runs on your computer in a browser. There is currently no public online demo. Start with
+the two lookup modes and try one of the example buttons. [Install and run Streamlit](docs/TRY_ASSISTANT.md#1-start-the-assistant)
 
 ### Local AI — Experimental
 
-The tested setup is an Apple M2 Mac with 8 GB of RAM, Python 3.11 and Ollama 0.40.15. Ollama requires macOS 14 or newer. Allow about 1.4 GB for the model download plus space for the app and Python environment. [Ollama system requirements](https://docs.ollama.com/macos) · [Model size](https://ollama.com/library/qwen3:1.7b)
+Generated answers can make unsupported scientific claims even when the source links are valid. In a
+separate bilingual evaluation set, the model cited a study that reduced FOXO3 in cultured cells and used
+it to draw an unsupported conclusion about FOXO3 activation and human lifespan. Read the cited passage
+before relying on a generated answer. This mode is **not ready for a stable release**.
+[Optional Ollama setup](docs/TRY_ASSISTANT.md#3-add-local-ai-optional) · [Phase 8A results and handoff](docs/phase8a_final_status.md)
 
-This mode searches five tracked project reports. It answers some questions directly from project evidence and uses `qwen3:1.7b` through local Ollama for generated summaries. Install the macOS app in Applications, quit it if it is running, and start its bundled server in Terminal with cloud features disabled. [Download Ollama for macOS](https://ollama.com/download/mac) · [Ollama macOS setup](https://docs.ollama.com/macos)
+## Scientific limits
 
-```sh
-OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NO_CLOUD=1 /Applications/Ollama.app/Contents/Resources/ollama serve
-```
+- The overlap depends on the database versions and the rules for matching genes. It counts genes recorded
+  in both sources.
+- The activity test used two groups of donors and lab-grown fibroblasts. It tested a specific comparison
+  with matched genes. The result leaves open the possibility of age-related signals in other tissues or
+  settings.
+- A relationship between gene activity and donor age can arise for several reasons. Results from cells,
+  mice or comparisons between people do not establish the effect of a treatment on human lifespan.
 
-Leave that terminal open. In a second terminal, download the model and check that Ollama lists it.
+[Full scientific report and open questions](reports/research_report_v2.md#open-questions-and-proposed-experiments)
 
-```sh
-/Applications/Ollama.app/Contents/Resources/ollama pull qwen3:1.7b
-/Applications/Ollama.app/Contents/Resources/ollama list
-```
+## Find what you need
 
-Launch Streamlit with the command above and select **Local AI — Experimental**. Try “Why are the Phase 7A partial correlations for TERT missing?” or “Что показал нокдаун SIRT6 в хондроцитах?” Expand **Retrieved evidence** to read the excerpts and open the exact report lines. The app shows up to six recent Local AI turns and uses up to two preceding questions for follow-ups. **Clear conversation** resets the session history.
-
-After installing the dependencies and downloading the model, inference and excerpt display work offline without an API key or paid service. Opening a published GitHub source link requires internet access.
-
-The app checks citation IDs against the retrieved passages. A generated answer can still make scientifically unsupported claims while citing valid IDs. The frozen 20-question replay had **11 Pass, 9 Minor and 0 Critical**. The separate, untouched bilingual holdout had **4 Pass and 1 Critical**. In the critical case, the model drew a conclusion about FOXO3 activation and human lifespan from a cultured-cell knockdown experiment. Local AI remains **Experimental** and **not ready for a stable release**. [Latest live evaluation](docs/phase8a_multistudy_reliability.md) · [Original release audit](docs/phase8a_release_readiness.md)
-
-All **85 application tests** and **8 Phase 7 tests** passed in their respective environments. The scientific `v2.0.0` release remains the reference for the completed analysis. [Phase 8A final status and verification](docs/phase8a_final_status.md)
-
-## Research stages
-
-| Stage | What to read |
+| If you want to… | Read |
 | --- | --- |
-| **v1.1 · Descriptive analysis** | [Original report](reports/research_report_v1.md) · [Prior art and source comparison](docs/related_work.md) |
-| **7A · RNA-seq** | [Frozen protocol](docs/phase7_research_protocol.md) · [Cohorts and inputs](reports/phase7_data_feasibility.md) · [Association and prediction results](reports/phase7_baseline_results.md) |
-| **7B · Evidence integrity** | [Audit and ledger](reports/phase7b_evidence_audit.md) · [Development benchmark](reports/phase7b_benchmark_results.md) |
-| **7C · Held-out evaluation** | [Evaluation protocol](docs/phase7c_evaluation_protocol.md) · [Baseline and normalized lookup results](reports/phase7c_results.md) |
-| **7D · Focused expansion** | [FOXO3 and SIRT6 case studies](reports/phase7d_case_studies.md) · [Extension ledger and verification](reports/phase7b_evidence_audit.md#phase-7d-extension) |
+| Understand the project without a biology background | [Start here](docs/START_HERE.md) |
+| Run the app and try verified examples | [Try the assistant](docs/TRY_ASSISTANT.md) |
+| Inspect the scientific methods, results and sources | [Consolidated report](reports/research_report_v2.md) · [Short research brief](reports/research_brief.md) |
+| Check published results or rebuild them from original inputs | [Reproduce the research](docs/REPRODUCE.md) |
+| Review where the experimental model succeeded and failed | [Phase 8A handoff](docs/phase8a_final_status.md) · [Live evaluation](docs/phase8a_multistudy_reliability.md) |
 
-## Detailed v1.1 inventory
+## Reproducibility
 
-| Measure | Result |
-| --- | ---: |
-| Confirmed GenAge Human / CellAge genes | 307 / 865 |
-| Shared genes | 113 |
-| GenAge Human only / CellAge only | 194 / 752 |
-| Union | 1,059 |
-| Jaccard similarity | 0.106704 |
-| CellAge records linked to shared genes | 125 |
-| Shared genes with direct GO Biological Process annotations | 113 / 113 |
-| Distinct direct positive terms, all eligible codes / excluding IEA | 1,805 / 1,532 |
+The `v2.0.0` tag preserves the scientific release. This repository includes code, derived tables and
+reports. A full rebuild requires the exact source files listed in the manifests. You can use the
+assistant and run its evidence checks with the files already in Git.
+[Verification and rebuild commands](docs/REPRODUCE.md)
 
-![Confirmed GenAge Human only, shared, and CellAge only gene counts](reports/gene_overlap.svg)
+### Official inputs
 
-The [GO figure](reports/go_biological_processes.svg) shows the most frequent direct terms by distinct gene count with IEA included. The [term table](reports/go_process_summary.csv) also reports counts without IEA.
+The project used GenAge Human Build 21, CellAge Build 3, official gene identifiers from HGNC and NCBI
+Gene, a versioned Gene Ontology archive and two GEO studies. The reproduction guide lists each version,
+source and fingerprint record. [Inputs and provenance](docs/REPRODUCE.md#official-inputs)
 
-## Methods and interpretation
+### Run the evidence audit and Q&A
 
-The workflow verifies the input checksums, validates NCBI Gene IDs and HGNC mappings, intersects the confirmed gene sets, and joins shared genes to direct GO annotations using exact UniProtKB accessions. It retains the source record ordinals and GAF line numbers. The [case studies](reports/gene_case_studies.md) trace TP53, CDKN2A and TERT records to the primary studies and document what each model and perturbation supports.
+You can score the lookups and verify the evidence ledger using the tracked files.
+[Evidence audit and benchmark commands](docs/REPRODUCE.md#verify-the-evidence-audit-and-benchmarks)
 
-Bonnefous et al. (2024) previously reported 113 shared genes in a study of evolutionary origins and protein networks. Their 303 exploitable GenAge Human and 852 exploitable CellAge genes followed different eligibility rules. The supplements do not provide a gene-level list for this comparison, so the shared count agrees and membership equivalence remains unverified. The contribution here is the pinned workflow and evidence audit. [Bonnefous et al.](https://doi.org/10.1007/s11357-024-01234-9), [comparison and release details](docs/related_work.md#bonnefous-et-al-2024)
+### Source attribution and reuse
 
-Coverage depends on the source snapshots, curation and evidence filters. One conflicting FNTB / CHURC1-FNTB mapping remains unresolved and neither candidate changes the overlap. The v1.1 GO frequencies are descriptive and do not test statistical enrichment. Cell-culture perturbations and model-organism findings do not establish effects on human lifespan. Phase 7A has a separate RNA-seq environment and [reproduction commands](reports/phase7_data_feasibility.md#provenance-reuse-and-reproduction).
-
-## Verify the evidence audit and benchmarks
-
-Run these standard-library checks from the repository root with Python 3.11+:
-
-```sh
-python3 -B -m scripts.phase7b_ledger --check
-python3 -B -m scripts.phase7b_score
-python3 -B -m scripts.phase7c_score baseline heldout
-python3 -B -m scripts.phase7c_score candidate heldout
-python3 -B -m scripts.phase7d_evidence --score
-```
-
-The [ledger](reports/phase7b_evidence_ledger.csv) preserves exact source rows and separates PMID reuse from what the papers establish about shared or distinct experiments. The [22-question benchmark](benchmarks/phase7b_questions.json) checks exact facts, references, evidence type and abstention. It is a development set for narrow English queries and does not measure generalization to other genes or literature. No language model was trained or used by the lookup.
-
-## Official inputs
-
-| Export | Direct download | Archive contents | Release notes |
-| --- | --- | --- | --- |
-| GenAge Human Genes | [human_genes.zip](https://genomics.senescence.info/genes/human_genes.zip) | Comma-delimited `genage_human.csv` and `release.html` | [Build 21, 2023-08-28](https://genomics.senescence.info/genes/release.html) |
-| CellAge gene manipulations | [cellAge.zip](https://genomics.senescence.info/cells/cellAge.zip) | Tab-delimited `cellage3.tsv` and `release.html` | [Build 3, 2023-04-23](https://genomics.senescence.info/cells/release.html) |
-
-The actual archives determine the parsing formats. The [HAGR download index](https://genomics.senescence.info/download.html) describes different delimiters and links to a separate CellAge expression-signature export, which is outside this study. Both URLs point to the current stable downloads. The build labels above were checked against the release notes bundled in the acquired archives. The SHA-256 records identify the exact snapshots even if the URLs later serve different files.
-
-Identifier harmonization uses the HGNC quarterly complete set dated 2026-10-06 and the NCBI Gene daily export with HTTP Last-Modified 2026-11-07T08:31:40Z. Annotation uses GO archive release 2026-08-05 with ontology data version 2026-07-26. The manifests distinguish file versions from retrieval timestamps. [HGNC and NCBI manifest](data/reference_provenance.json), [GO manifest](data/go_provenance.json)
-
-## Source attribution and reuse
-
-HAGR publishes its attribution terms under CC BY 3.0 Unported and asks users to contact the maintainers before making many queries or retrieving large volumes. The report cites de Magalhães et al. (2024) for HAGR, Tacutu et al. (2018) for GenAge and Avelar et al. (2020) for CellAge. The shared gene table harmonizes identifiers and summarizes source records. [HAGR terms and citation guidance](https://genomics.senescence.info/legal.html), [report references](reports/research_report_v1.md#references)
-
-GO data from archive release 2026-08-05 are © Gene Ontology Consortium, available under CC BY 4.0. The project filtered, joined and summarized the source data in derived tables and a figure. Original project code and prose have no explicit reuse license in this repository. Source-data terms apply to their respective materials. [GO attribution and license](reports/go_biological_processes.md#provenance-and-outputs), [GO citation policy](https://geneontology.org/docs/go-citation-policy/)
-
-## Reproduce the inventory
-
-Run from the repository root with Python 3.11 or newer. The inventory scripts use only the standard library. Run the full application suite in the UI environment to include the Streamlit tests. [Test commands](docs/phase8a_final_status.md#verification)
-
-```sh
-python3 -B -m scripts.download_data
-python3 -B -m scripts.inspect_data
-python3 -B -m unittest discover -s tests -v
-```
-
-The downloader saves the original ZIP files under `data/raw/` and records the requested and final URLs, UTC download time, size, and SHA-256 in a JSON file beside each archive. It checks ZIP integrity and verifies existing archives without overwriting them. If only a JSON record is present, the downloader restores the archive only if its bytes match the recorded snapshot. If a download no longer matches, retain the recorded metadata and request the matching export from HAGR or use a retained copy with the recorded checksum.
-
-The inspector verifies the fingerprints, reads the tables directly from the ZIPs, and regenerates [reports/data_inventory.md](reports/data_inventory.md). Keep the JSON provenance records with the report. Git ignores raw ZIPs and generated datasets.
-
-### Manual download
-
-If HTTPS fails in a portable Python installation, point `SSL_CERT_FILE` to a trusted local CA bundle. On this macOS setup, `SSL_CERT_FILE=/etc/ssl/cert.pem` worked. If the downloader remains blocked, open the official download links above in a browser, save the original ZIPs under `data/raw/` using the exact filenames and case, then run:
-
-```sh
-python3 -B -m scripts.download_data --register-local
-python3 -B -m scripts.inspect_data
-```
-
-Manual registration records when the local files were registered. With existing provenance records it checks the archived bytes against the recorded checksums. If both download methods fail, leave the archives absent and record the failure before continuing.
-
-## Reproduce the gene identifier audit
-
-Obtain the two files listed in [data/reference_provenance.json](data/reference_provenance.json) from their official URLs and save them under `data/raw/references/` using the filenames in the manifest. Keep exact copies of the downloaded files. The NCBI URL is updated in place, so reproducing this audit later may require the retained original rather than a fresh download. The script rejects either reference if its SHA-256 or size differs from the manifest.
-
-```sh
-python3 -B -m scripts.download_data
-python3 -B -m scripts.harmonize_genes
-python3 -B -m scripts.harmonize_genes --check
-python3 -B -m unittest discover -s tests -v
-```
-
-The script writes [reports/gene_identifier_audit.md](reports/gene_identifier_audit.md) and the local `data/processed/gene_mapping.csv`. Only confirmed mappings populate the approved HGNC fields. Each mapping carries the original source identifier, symbol, and record ordinals. The original archives retain the experimental details for all referenced rows. Git ignores the raw references and the generated CSV.
-
-## Reproduce the descriptive gene overlap
-
-Use the existing `data/processed/gene_mapping.csv`. If it is missing, regenerate it with `python3 -B -m scripts.harmonize_genes` using the original pinned local archives and reference snapshots described above. The overlap script checks the mapping SHA-256 against the Phase 2 audit before generating results.
-
-```sh
-python3 -B -m scripts.analyze_overlap
-python3 -B -m scripts.analyze_overlap --check
-python3 -B -m unittest discover -s tests -v
-```
-
-The [overlap report](reports/gene_overlap.md) includes the confirmed counts, the [shared gene table](reports/gene_overlap_genes.csv), and a [bar chart](reports/gene_overlap.svg). The shared gene table links each gene to its original GenAge Human and CellAge records. The report keeps the unresolved CellAge mapping separate and tests both hypothetical assignments.
-
-## Reproduce the GO Biological Process annotation
-
-Keep the pinned HGNC snapshot and the Phase 2 mapping available. Save the two official GO files listed in [data/go_provenance.json](data/go_provenance.json) under `data/raw/references/` with their original filenames. The script checks the GO and HGNC file fingerprints and reconstructs the Phase 3 gene table for a byte-for-byte input check.
-
-```sh
-python3 -B -m scripts.annotate_go
-python3 -B -m scripts.annotate_go --check
-python3 -B -m unittest discover -s tests -v
-```
-
-The [GO BP report](reports/go_biological_processes.md) documents the release, accession mapping, evidence filters, and coverage. The [annotation table](reports/go_gene_annotations.csv) preserves source line numbers and excluded mapped BP rows. The [term summary](reports/go_process_summary.csv) and [SVG](reports/go_biological_processes.svg) describe direct annotations by unique gene count. Raw GO files remain outside Git.
+GenAge and CellAge come from the Human Ageing Genomic Resources (HAGR). The Gene Ontology Consortium
+supplies GO data, and the RNA-seq datasets come from their originating studies via GEO. The project
+documents the applicable terms and references. [Data credits and reuse terms](docs/REPRODUCE.md#source-attribution-and-reuse)
