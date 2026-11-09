@@ -6,7 +6,7 @@ from http.client import HTTPConnection, HTTPException
 import json
 import re
 
-from scripts.local_retrieval import FOLLOW_UP, MARKDOWN_LINK, ROOT, Passage, read_passages, retrieve, terms
+from scripts.local_retrieval import FOLLOW_UP, GENES, MARKDOWN_LINK, ROOT, Passage, read_passages, retrieve, terms
 from scripts.phase7b_qa import ASSOCIATIONS, BASELINE, Evidence
 
 MODEL = "qwen3:1.7b"
@@ -48,6 +48,34 @@ ELIGIBILITY = {
     "eligible": ("gene passed eligibility", "ген прошёл отбор"),
     "low_detection_or_constant": ("gene failed the expression filter", "ген не прошёл фильтр экспрессии"),
     "unmapped": ("gene could not be mapped", "ген не сопоставлен с данными когорты"),
+}
+MULTISTUDY_PAIRS = {
+    "foxo3": (
+        "genotype",
+        ("P7D-L16-L16",
+         "In cultured human dermal fibroblasts, FOXO3 knockdown slowed population doubling and increased "
+         "senescence-associated markers, including SA-β-gal staining.",
+         "В культуре дермальных фибробластов человека нокдаун FOXO3 замедлил удвоение популяции и повысил "
+         "маркеры клеточной сенесценции, включая окрашивание на SA-β-gal."),
+        ("P7D-L18-L18",
+         "In a separate observational case-control study, rs2802292 genotype was associated with exceptional "
+         "longevity in Japanese American men. The researchers did not alter FOXO3 expression.",
+         "В отдельном наблюдательном исследовании случай–контроль генотип rs2802292 был связан с исключительным "
+         "долголетием у американских мужчин японского происхождения. Исследователи не изменяли экспрессию FOXO3."),
+    ),
+    "sirt6": (
+        "mouse survival",
+        ("P7D-L22-L22",
+         "In cultured human knee chondrocytes, SIRT6 depletion increased senescence-associated markers "
+         "and reduced proliferation. This experiment measured cellular outcomes.",
+         "В культуре хондроцитов коленного сустава человека подавление SIRT6 повысило маркеры клеточной "
+         "сенесценции и снизило пролиферацию. В этом опыте измеряли клеточные показатели."),
+        ("P7D-L28-L28",
+         "Survival was measured in a separate experiment with Sirt6 overexpression in transgenic mice. "
+         "Males lived longer than wild-type controls, with no significant extension in females.",
+         "Выживаемость измеряли в отдельном опыте с повышенной экспрессией Sirt6 у трансгенных мышей. "
+         "Самцы жили дольше контрольных мышей дикого типа. У самок статистически значимого продления жизни не выявили."),
+    ),
 }
 
 
@@ -287,6 +315,48 @@ def overlap_prior_art_answer(question, russian):
     return LocalAnswer("answered", answer, cited, cited)
 
 
+def multistudy_answer(question, russian, history):
+    """Keep each reviewed study's result bound to its own source."""
+    q = question.casefold()
+    words = terms(q)
+    survival = bool(words & {"survival", "lifespan", "longevity"} or re.search(r"\b(?:live longer|продл\w*\s+жизн\w*|выжива\w*)\b", q))
+    human_effect = {"human", "expression"} <= words and survival and re.search(
+        r"\b(?:chang\w*|alter\w*|modif\w*|increas\w*|reduc\w*|измен\w*|повыс\w*|подав\w*)\b", q
+    )
+    genes = words & GENES
+    if human_effect and not genes and re.search(r"\b(?:this gene|that gene|этого гена)\b", q):
+        genes = next((terms(prior) & GENES for prior in reversed(history) if terms(prior) & GENES), set())
+        if len(genes) != 1:
+            message = ("Уточните ген, о котором идёт речь." if russian else
+                       "Specify which gene you mean before drawing a conclusion about human lifespan.")
+            return LocalAnswer("insufficient_evidence", message)
+    if len(genes) != 1:
+        return None
+    gene = next(iter(genes))
+    if gene not in MULTISTUDY_PAIRS:
+        return None
+
+    counterpart, *studies = MULTISTUDY_PAIRS[gene]
+    cell = words & {"cell", "cellular", "culture", "fibroblast", "chondrocyte", "knockdown"} or re.search(r"\bкультур\w*\b", q)
+    genotype = bool(words & {"genotype", "rs2802292"})
+    mouse_survival = "mouse" in words and survival
+    comparison = cell and ((counterpart == "genotype" and genotype) or (counterpart == "mouse survival" and mouse_survival))
+    if not (comparison or human_effect):
+        return None
+
+    source_ids = {study[0] for study in studies}
+    sources = {p.id: p for p in read_passages() if p.id in source_ids}
+    if len(sources) != len(studies):
+        message = ("В отчётах не хватает источников для сравнения этих исследований." if russian else
+                   "The reports lack the sources needed to compare these studies.")
+        return LocalAnswer("insufficient_evidence", message)
+    cited = tuple(sources[study[0]] for study in studies)
+    summaries = [study[2 if russian else 1] for study in studies]
+    summaries.append(f"Эти исследования не устанавливают, продлевает ли изменение экспрессии {gene.upper()} жизнь человека."
+                     if russian else f"These studies do not establish that altering {gene.upper()} expression extends human lifespan.")
+    return LocalAnswer("answered", " ".join(summaries), cited, cited)
+
+
 def missing_model():
     return OllamaError("missing_model", f"Local model {MODEL} is missing. Run `ollama pull {MODEL}`, then retry.")
 
@@ -378,6 +448,8 @@ def answer_local(question, prior_questions=()):
         if result := phase7a_panel_answer(question, russian):
             return result
         if result := overlap_prior_art_answer(question, russian):
+            return result
+        if result := multistudy_answer(question, russian, history):
             return result
     except OSError:
         return LocalAnswer("evidence_error", "Could not read the tracked research reports. Check your checkout.")

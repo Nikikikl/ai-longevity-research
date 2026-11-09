@@ -103,6 +103,42 @@ class RetrievalTests(unittest.TestCase):
 
 class LocalAnswerTests(unittest.TestCase):
     @patch("scripts.local_ai.request")
+    def test_multistudy_pairs_keep_interventions_and_endpoints_separate(self, request):
+        for question, sources, phrases in (
+            ("Какой вывод о FOXO3 позволяет сделать опыт с фибробластами, а какой — данные по генотипам людей?",
+             ("P7D-L16-L16", "P7D-L18-L18"), ("замедлил удвоение", "rs2802292", "американских мужчин японского происхождения")),
+            ("How do the SIRT6 findings in human knee chondrocytes differ from the survival findings in Sirt6-overexpressing mice?",
+             ("P7D-L22-L22", "P7D-L28-L28"), ("reduced proliferation", "males", "no significant extension in females")),
+        ):
+            with self.subTest(question=question):
+                result = local_ai.answer_local(question)
+                self.assertEqual(result.status, "answered")
+                self.assertEqual(tuple(p.id for p in result.cited), sources)
+                for phrase in phrases:
+                    self.assertIn(phrase, result.text)
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
+    def test_multistudy_followup_requires_an_unambiguous_gene(self, request):
+        question = "А можно ли по этим данным сказать, что изменение экспрессии этого гена продлит жизнь человеку?"
+        result = local_ai.answer_local(question, ["Compare the FOXO3 cell and genotype results."])
+        self.assertEqual([p.id for p in result.cited], ["P7D-L16-L16", "P7D-L18-L18"])
+        self.assertIn("не устанавливают", result.text)
+        ambiguous = local_ai.answer_local(question, ["Compare the FOXO3 and SIRT6 evidence."])
+        self.assertEqual(ambiguous.status, "insufficient_evidence")
+        self.assertEqual(ambiguous.cited, ())
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
+    def test_multistudy_answer_abstains_if_one_required_passage_is_missing(self, request):
+        passages = tuple(p for p in local_retrieval.read_passages() if p.id != "P7D-L18-L18")
+        with patch("scripts.local_ai.read_passages", return_value=passages):
+            result = local_ai.answer_local("What did FOXO3 knockdown show in fibroblasts compared with the human genotype evidence?")
+        self.assertEqual(result.status, "insufficient_evidence")
+        self.assertEqual(result.cited, ())
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
     def test_prior_art_questions_distinguish_count_from_gene_membership(self, request):
         for question in (
             "Можно ли считать 113 совпавших генов новым результатом по сравнению с работой Bonnefous?",
