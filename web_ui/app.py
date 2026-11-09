@@ -11,13 +11,19 @@ from web_ui.presentation import answer_html, reference_html
 LOCAL_MODE = "Local AI — Experimental"
 MAX_LOCAL_TURNS = 6
 MODES = {"Research Q&A": "research", "Evidence records": "records", LOCAL_MODE: "local"}
-MODE_PHASES = {"Research Q&A": "7C", "Evidence records": "7D", LOCAL_MODE: "8A"}
+MODE_BADGES = {
+    "Research Q&A": "Phase 7C · Deterministic lookup",
+    "Evidence records": "Phase 7D · Deterministic lookup",
+    LOCAL_MODE: "Phase 8A · May use Ollama",
+}
 
 SCOPE = {
-    "Research Q&A": "Phase 7C · English questions about the RNA-seq panel and the TP53, CDKN2A and TERT audit.",
-    "Evidence records": "Phase 7D · Use `record <ID>`, `pmid <number>`, `cellage <gene>` or `association <gene>`. "
-                        "Gene commands cover FOXO3 and SIRT6.",
-    LOCAL_MODE: f"Phase 8A · {MODEL} via Ollama · Experimental answers. Verify claims against the retrieved reports.",
+    "Research Q&A": "Deterministic lookup for English questions about the RNA-seq panel and the "
+                    "TP53, CDKN2A and TERT audit.",
+    "Evidence records": "Deterministic lookup. Use `record <ID>`, `pmid <number>`, `cellage <gene>` or "
+                        "`association <gene>`. Gene commands cover FOXO3 and SIRT6.",
+    LOCAL_MODE: f"Generated answers use {MODEL} via Ollama. Check each claim against the retrieved passages. "
+                "Valid source IDs can accompany unsupported claims.",
 }
 EXAMPLES = {
     "Research Q&A": ("What was the sign agreement?",
@@ -39,7 +45,7 @@ def submit(question, mode):
         if mode == LOCAL_MODE:
             local_indices = [index for index, turn in enumerate(turns) if turn[1] == LOCAL_MODE]
             history = [turns[index][0] for index in local_indices[-MAX_PRIOR_QUESTIONS:]]
-            with st.spinner("Searching the reports and querying local Ollama…"):
+            with st.spinner("Checking project evidence…"):
                 result = answer_local(question, history)
             if len(local_indices) >= MAX_LOCAL_TURNS:
                 del turns[local_indices[0]]
@@ -110,7 +116,7 @@ def show_turn(index, question, mode, result):
             st.html(f'<div class="user-copy">{escape(question)}</div>')
     with st.container(key=f"answer-turn-{index}"):
         with st.chat_message("assistant", avatar=":material/science:"):
-            st.html(f'<div class="turn-mode {MODES[mode]}"><span>Phase {MODE_PHASES[mode]}</span>'
+            st.html(f'<div class="turn-mode {MODES[mode]}"><span>{MODE_BADGES[mode]}</span>'
                     f'<strong>{escape(mode)}</strong></div>')
             if mode == LOCAL_MODE:
                 show_local_answer(result)

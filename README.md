@@ -1,6 +1,6 @@
 # AI & Longevity: Exploring Genes Associated with Human Aging
 
-**Experimental v2.0 complete** · [Final scientific report](reports/research_report_v2.md) · [Internship research brief](reports/research_brief.md)
+**Reproducible scientific analysis complete · Local AI experimental** · [Final scientific report](reports/research_report_v2.md) · [Internship research brief](reports/research_brief.md) · [Phase 8A handoff](docs/phase8a_final_status.md)
 
 The project links aging and cellular senescence records to their source evidence, tests a fixed gene panel in two human fibroblast RNA-seq cohorts, and evaluates a deterministic research lookup. It documents where curated evidence agrees, how the panel performed against matched controls and where the available experiments leave claims unresolved.
 
@@ -8,7 +8,7 @@ The project links aging and cellular senescence records to their source evidence
 
 - **113 shared genes** were validated against pinned GenAge Human and CellAge snapshots. This overlap count was reported previously; the contribution here is traceable reconstruction and evidence review.
 - **No fixed-panel advantage in RNA-seq:** 109 genes were evaluable in two healthy fibroblast cohorts, and the cross-cohort age-association score did not exceed expression-matched control panels.
-- **Auditable evidence, not a general-purpose AI:** five genes received focused literature review. The deterministic lookup improved from **5/24 to 18/24** correct answers on a small held-out set of unfamiliar phrasings, with important scope limitations.
+- **Auditable evidence:** five genes received focused literature review. The deterministic lookup improved from **5/24 to 18/24** correct answers on a small held-out set of unfamiliar phrasings, with important scope limitations.
 
 ## Quick start
 
@@ -31,7 +31,15 @@ python3 -m venv .venv/ui
 .venv/ui/bin/python -m streamlit run web_ui/app.py
 ```
 
-Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Choose **Research Q&A** for narrow English questions (Phase 7C) or **Evidence records** for structured commands (Phase 7D). Both modes work independently of Ollama and evaluate each query on its own. Examples select their mode when clicked. Chat history lasts for the browser session.
+Open [http://127.0.0.1:8501](http://127.0.0.1:8501) and choose a mode.
+
+| Mode | When to use it |
+| --- | --- |
+| **Research Q&A** | Use this deterministic lookup for focused English questions about the Phase 7A RNA-seq panel and the TP53, CDKN2A and TERT evidence audit. |
+| **Evidence records** | Use this deterministic lookup for exact evidence records, PMIDs, or the curated FOXO3 and SIRT6 perturbation and association records. |
+| **Local AI — Experimental** | Use this mode to find and summarize project report excerpts in Russian or English. Check each generated claim against the cited lines before relying on it. |
+
+The two deterministic modes work independently of Ollama and evaluate each query on its own. Examples select their mode when clicked. Chat history lasts for the browser session.
 
 The framework-independent [Python interface](scripts/research_assistant.py) is `answer_question(question, mode="research")` for Phase 7C or `mode="records"` for Phase 7D. It returns the same dictionary as the corresponding CLI: `status`, `abstains`, `answer`, `facts`, `evidence_type`, `references`, `limitations`, and optional `details`. Status is one of `answered`, `not_measured`, `insufficient_evidence`, or `unsupported_question`. The interface reads tracked evidence locally and accepts no conversation context.
 
@@ -39,7 +47,7 @@ The framework-independent [Python interface](scripts/research_assistant.py) is `
 
 The tested setup is an Apple M2 Mac with 8 GB of RAM, Python 3.11 and Ollama 0.40.15. Ollama requires macOS 14 or newer. Allow about 1.4 GB for the model download plus space for the app and Python environment. [Ollama system requirements](https://docs.ollama.com/macos) · [Model size](https://ollama.com/library/qwen3:1.7b)
 
-This mode searches five tracked reports and asks a local model to synthesize the retrieved excerpts. Install the macOS app in Applications, quit it if it is running, and start its bundled server in Terminal with cloud features disabled. [Download Ollama for macOS](https://ollama.com/download/mac) · [Ollama macOS setup](https://docs.ollama.com/macos)
+This mode searches five tracked project reports. It answers some questions directly from project evidence and uses `qwen3:1.7b` through local Ollama for generated summaries. Install the macOS app in Applications, quit it if it is running, and start its bundled server in Terminal with cloud features disabled. [Download Ollama for macOS](https://ollama.com/download/mac) · [Ollama macOS setup](https://docs.ollama.com/macos)
 
 ```sh
 OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NO_CLOUD=1 /Applications/Ollama.app/Contents/Resources/ollama serve
@@ -56,7 +64,9 @@ Launch Streamlit with the command above and select **Local AI — Experimental**
 
 After installing the dependencies and downloading the model, inference and excerpt display work offline without an API key or paid service. Opening a published GitHub source link requires internet access.
 
-Treat generated prose as an experimental summary. The app checks citation IDs against the retrieved passages. Check the excerpts for whether they support each claim. All 81 automated tests passed. The release audit evaluated 20 questions through the local app, including 18 with model inference, and found scientific release blockers. [Release readiness and live results](docs/phase8a_release_readiness.md) · [Phase 8A manual evaluation](docs/phase8a_local_ai_evaluation.md)
+The app checks citation IDs against the retrieved passages. A generated answer can still make scientifically unsupported claims while citing valid IDs. The frozen 20-question replay had **11 Pass, 9 Minor and 0 Critical**. The separate, untouched bilingual holdout had **4 Pass and 1 Critical**. In the critical case, the model drew a conclusion about FOXO3 activation and human lifespan from a cultured-cell knockdown experiment. Local AI remains **Experimental** and **not ready for a stable release**. [Latest live evaluation](docs/phase8a_multistudy_reliability.md) · [Original release audit](docs/phase8a_release_readiness.md)
+
+All **85 application tests** and **8 Phase 7 tests** passed in their respective environments. The scientific `v2.0.0` release remains the reference for the completed analysis. [Phase 8A final status and verification](docs/phase8a_final_status.md)
 
 ## Research stages
 
@@ -126,7 +136,7 @@ GO data from archive release 2026-08-05 are © Gene Ontology Consortium, availab
 
 ## Reproduce the inventory
 
-Run from the repository root with Python 3.11 or newer. The scripts and tests use only the standard library, so no package installation or virtual environment is required.
+Run from the repository root with Python 3.11 or newer. The inventory scripts use only the standard library. Run the full application suite in the UI environment to include the Streamlit tests. [Test commands](docs/phase8a_final_status.md#verification)
 
 ```sh
 python3 -B -m scripts.download_data
