@@ -9,6 +9,7 @@ from scripts.research_assistant import answer_question
 
 
 TERT_QUESTION = "Why are the Phase 7A partial correlations for TERT missing?"
+MODEL_TERT_QUESTION = "Why are the partial correlations for TERT missing?"
 FOXO3_QUESTION = "What happened when FOXO3 was knocked down in human dermal fibroblasts?"
 FOLLOW_UP = "And what did they find about human longevity?"
 
@@ -102,6 +103,51 @@ class RetrievalTests(unittest.TestCase):
 
 class LocalAnswerTests(unittest.TestCase):
     @patch("scripts.local_ai.request")
+    def test_phase7a_missing_estimates_use_the_frozen_ledger(self, request):
+        cases = (
+            ("В таблице Phase 7A для TERT пустые значения. Их надо читать как нулевую корреляцию?",
+             "P7A-CSV-L103-L103", ("не оценивалась", "измеренный ноль", "фильтр экспрессии")),
+            (TERT_QUESTION, "P7A-CSV-L103-L103", ("not estimated", "measured zero", "expression filter")),
+            ("In Phase 7A, do blank correlation estimates for FGF21 mean zero?",
+             "P7A-CSV-L29-L29", ("not estimated", "passed eligibility", "expression filter")),
+            ("Как в Phase 7A для TERT отличить измеренный ноль от отсутствующей оценки корреляции?",
+             "P7A-CSV-L103-L103", ("не оценивалась", "измеренный ноль", "фильтр экспрессии")),
+        )
+        for question, source, phrases in cases:
+            with self.subTest(question=question):
+                result = local_ai.answer_local(question)
+                self.assertEqual(result.status, "answered")
+                self.assertEqual(result.cited[0].id, source)
+                self.assertNotIn("r =", result.text)
+                for phrase in phrases:
+                    self.assertIn(phrase, result.text)
+                if question == TERT_QUESTION:
+                    self.assertIn("P7A-L17-L17", {p.id for p in result.cited})
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
+    def test_phase7a_measured_near_zero_stays_a_measurement(self, request):
+        result = local_ai.answer_local(
+            "Was the Phase 7A discovery partial correlation for CDKN2A a measured value near zero?"
+        )
+        self.assertEqual(result.status, "answered")
+        self.assertIn("r = -0.001464046161", result.text)
+        self.assertNotIn("not estimated", result.text)
+        source = result.cited[0]
+        self.assertEqual(source.id, "P7A-CSV-L15-L15")
+        self.assertTrue(source.url.endswith("/reports/phase7_gene_associations.csv?plain=1#L15"))
+        self.assertIn("1029,CDKN2A,eligible,eligible,-0.001464046161", source.text)
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
+    def test_phase7a_gene_outside_the_ledger_abstains(self, request):
+        result = local_ai.answer_local("What were the Phase 7A partial correlations for CFTR?")
+        self.assertEqual(result.status, "insufficient_evidence")
+        self.assertIn("no row for CFTR", result.text)
+        self.assertEqual([p.id for p in result.cited], ["P7A-L7-L7"])
+        request.assert_not_called()
+
+    @patch("scripts.local_ai.request")
     def test_russian_cell_terminology_is_scoped_to_relevant_questions(self, request):
         for question, expect_glossary in (
             ("Что показал нокдаун SIRT6 в хондроцитах?", True),
@@ -128,7 +174,7 @@ class LocalAnswerTests(unittest.TestCase):
 
     @patch("scripts.local_ai.request")
     def test_only_supplied_passages_can_become_source_cards(self, request):
-        valid_id = local_retrieval.retrieve(TERT_QUESTION)[0].id
+        valid_id = local_retrieval.retrieve(MODEL_TERT_QUESTION)[0].id
         for answer, ids, expected in (
             ("TERT failed the expression filter in both cohorts.", [valid_id], "answered"),
             ("This is a claim.", [valid_id, "P7A-L999-L999"], "citation_error"),
@@ -140,7 +186,7 @@ class LocalAnswerTests(unittest.TestCase):
             with self.subTest(expected=expected, answer=answer):
                 response = chat_response(answer, ids)
                 request.side_effect = [{"models": [{"name": local_ai.MODEL}]}, response, response]
-                result = local_ai.answer_local(TERT_QUESTION)
+                result = local_ai.answer_local(MODEL_TERT_QUESTION)
                 self.assertEqual(result.status, expected)
                 if expected == "answered":
                     self.assertEqual(result.text, answer)
@@ -169,7 +215,7 @@ class LocalAnswerTests(unittest.TestCase):
         ):
             with self.subTest(status=status):
                 connection.return_value.request.side_effect = error
-                result = local_ai.answer_local(TERT_QUESTION)
+                result = local_ai.answer_local(MODEL_TERT_QUESTION)
                 self.assertEqual(result.status, status)
                 self.assertEqual(result.cited, ())
                 connection.assert_called_with("127.0.0.1", 11434, timeout=local_ai.STATUS_TIMEOUT)
@@ -180,7 +226,7 @@ class LocalAnswerTests(unittest.TestCase):
         response.return_value.status = 200
         response.return_value.read.return_value = json.dumps({"models": [{"name": local_ai.MODEL}]}).encode()
         response.side_effect = [response.return_value, TimeoutError()]
-        self.assertEqual(local_ai.answer_local(TERT_QUESTION).status, "timeout")
+        self.assertEqual(local_ai.answer_local(MODEL_TERT_QUESTION).status, "timeout")
         connection.assert_called_with("127.0.0.1", 11434, timeout=local_ai.CHAT_TIMEOUT)
         self.assertEqual(connection.call_count, 2)
 
@@ -193,7 +239,7 @@ class LocalAnswerTests(unittest.TestCase):
             with self.subTest(status=status):
                 request.reset_mock()
                 request.return_value = {"models": models}
-                result = local_ai.answer_local(TERT_QUESTION)
+                result = local_ai.answer_local(MODEL_TERT_QUESTION)
                 self.assertEqual(result.status, status)
                 self.assertIn(f"ollama pull {local_ai.MODEL}", result.text)
                 request.assert_called_once_with("/api/tags", local_ai.STATUS_TIMEOUT)
@@ -240,7 +286,7 @@ class LocalAnswerTests(unittest.TestCase):
             with self.subTest(response=response):
                 request.reset_mock()
                 request.side_effect = [{"models": [{"name": local_ai.MODEL}]}, response, response]
-                result = local_ai.answer_local(TERT_QUESTION)
+                result = local_ai.answer_local(MODEL_TERT_QUESTION)
                 self.assertEqual(result.status, "invalid_response")
                 self.assertEqual(result.cited, ())
                 self.assertTrue(result.passages)
@@ -248,13 +294,13 @@ class LocalAnswerTests(unittest.TestCase):
 
     @patch("scripts.local_ai.request")
     def test_correction_reuses_evidence_and_accepts_only_valid_replacement(self, request):
-        passage = local_retrieval.retrieve(TERT_QUESTION)[0]
+        passage = local_retrieval.retrieve(MODEL_TERT_QUESTION)[0]
         request.side_effect = [
             {"models": [{"name": local_ai.MODEL}]},
             chat_response("Discard this failed answer.", ["P7A-L999-L999"]),
             chat_response("TERT failed the filter in both cohorts.", [passage.id]),
         ]
-        result = local_ai.answer_local(TERT_QUESTION)
+        result = local_ai.answer_local(MODEL_TERT_QUESTION)
         self.assertEqual(result.status, "answered")
         self.assertEqual(result.cited, (passage,))
         self.assertEqual(result.text, "TERT failed the filter in both cohorts.")
@@ -274,19 +320,19 @@ class LocalUITests(unittest.TestCase):
     def test_ui_shows_trusted_links_and_withholds_invalid_citations(self, request):
         from streamlit.testing.v1 import AppTest
 
-        passage = local_retrieval.retrieve(TERT_QUESTION)[0]
+        passage = local_retrieval.retrieve(MODEL_TERT_QUESTION)[0]
         models = {"models": [{"name": local_ai.MODEL}]}
         good = chat_response("TERT failed the filter in both cohorts.", [passage.id])
         bad = chat_response("An invented claim.", ["P7A-L999-L999"])
         request.side_effect = [models, models, good, models, models, bad, bad, models]
         app = AppTest.from_file(str(local_retrieval.ROOT / "web_ui/app.py")).run()
         app.radio[0].set_value("Local AI — Experimental").run()
-        app.chat_input[0].set_value(TERT_QUESTION).run()
+        app.chat_input[0].set_value(MODEL_TERT_QUESTION).run()
         self.assertFalse(app.exception)
         self.assertTrue(any(e.label == "Retrieved evidence" for e in app.expander))
         self.assertTrue(any(passage.url in html.proto.body for html in app.get("html")))
         self.assertTrue(any(passage.url in link.value for link in app.markdown))
-        app.chat_input[0].set_value(TERT_QUESTION).run()
+        app.chat_input[0].set_value(MODEL_TERT_QUESTION).run()
         self.assertFalse(app.exception)
         self.assertTrue(any("withheld" in warning.value for warning in app.warning))
         self.assertFalse(any("P7A-L999-L999" in html.proto.body for html in app.get("html")))

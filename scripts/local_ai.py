@@ -1,11 +1,13 @@
 """Bounded research chat using only the Ollama HTTP API on loopback."""
 
+import csv
 from dataclasses import dataclass
 from http.client import HTTPConnection, HTTPException
 import json
 import re
 
-from scripts.local_retrieval import FOLLOW_UP, Passage, retrieve, terms
+from scripts.local_retrieval import FOLLOW_UP, ROOT, Passage, read_passages, retrieve, terms
+from scripts.phase7b_qa import ASSOCIATIONS, BASELINE
 
 MODEL = "qwen3:1.7b"
 OLLAMA_HOST = "127.0.0.1"
@@ -36,6 +38,17 @@ RUSSIAN_CELL_TERMS = """Ответьте на русском языке, в дв
 Сохраняйте обозначение SA-β-gal. Пишите «повреждение ДНК» и «сенесценция»."""
 ANSWER_STATUSES = ("answered", "insufficient_evidence")
 INLINE_REFERENCE = re.compile(r"https?://|[\[\]]|\b[A-Z][A-Z0-9]*-L\d+(?:-L\d+)?\b", re.IGNORECASE)
+PHASE7A = re.compile(r"\b(?:phase|фаз[аеуы])\s*7[aа]\b", re.IGNORECASE)
+PARTIAL_R = re.compile(r"\b(?:partial\s+(?:correlations?|r)|частичн\w*\s+корреляц\w*)\b", re.IGNORECASE)
+MISSING_OR_ZERO = re.compile(
+    r"\b(?:blanks?|empty|missing|absent|unmeasured|ineligible|zeros?|not (?:measured|estimated)"
+    r"|пуст\w*|отсутств\w*|нул\w*|пропуск\w*)\b", re.IGNORECASE
+)
+ELIGIBILITY = {
+    "eligible": ("gene passed eligibility", "ген прошёл отбор"),
+    "low_detection_or_constant": ("gene failed the expression filter", "ген не прошёл фильтр экспрессии"),
+    "unmapped": ("gene could not be mapped", "ген не сопоставлен с данными когорты"),
+}
 
 
 @dataclass(frozen=True)
@@ -50,6 +63,61 @@ class OllamaError(Exception):
     def __init__(self, status, message):
         super().__init__(message)
         self.status = status
+
+
+def phase7a_correlation_answer(question, russian, passages):
+    """Read individual Phase 7A estimates before handing other questions to the model."""
+    if not PHASE7A.search(question) or "?" in question.rstrip("?") or ";" in question:
+        return None
+    question_terms = terms(question)
+    if not (PARTIAL_R.search(question) or ("correlation" in question_terms and MISSING_OR_ZERO.search(question))):
+        return None
+    if question_terms & {"lifespan", "survival", "protein", "senescence", "intervention"}:
+        return None
+
+    lines = (ROOT / ASSOCIATIONS).read_text(encoding="utf-8").splitlines()
+    reader = csv.DictReader(lines)
+    rows = {row["approved_symbol"]: (reader.line_num, row) for row in reader}
+    symbols = {term.upper() for term in question_terms}
+    # A named symbol after "for" or "для" can also be outside the ledger.
+    named = set(re.findall(r"\b(?:for|для)\s+([A-Z][A-Z0-9]+)\b", question))
+    genes = (rows.keys() & symbols) | named
+    if len(genes) != 1:
+        return None
+    gene = genes.pop()
+    supporting = tuple(p for p in passages if p.path == BASELINE and gene.casefold() in terms(p.text))
+    if not supporting:
+        supporting = tuple(p for p in read_passages() if p.id == "P7A-L7-L7")
+    if gene not in rows:
+        message = (f"В таблице Phase 7A нет строки для {gene}. Данных для оценки частичной корреляции недостаточно."
+                   if russian else f"The Phase 7A ledger has no row for {gene}. It provides no partial correlation estimate.")
+        return LocalAnswer("insufficient_evidence", message, supporting, supporting)
+
+    line, row = rows[gene]
+    source = Passage(f"P7A-CSV-L{line}-L{line}", ASSOCIATIONS, "Phase 7A gene association ledger",
+                     line, line, lines[line - 1])
+    cited = (source, *supporting)
+    answer = [f"{gene}, Phase 7A. Экспрессия в фибробластах и возраст доноров." if russian
+              else f"{gene}, Phase 7A. Fibroblast expression and donor chronological age."]
+    missing = False
+    labels = ("Поисковая когорта", "Валидационная когорта") if russian else ("Discovery cohort", "Validation cohort")
+    for dataset, label in zip(("gse113957", "gse226189"), labels):
+        # Keep the CSV value as text so a recorded zero remains a measured value.
+        estimate = row[f"{dataset}_partial_r"]
+        if estimate:
+            answer.append(f"{label}. r = {estimate}.")
+        else:
+            missing = True
+            reason = ELIGIBILITY[row[f"{dataset}_status"]][russian]
+            answer.append(f"{label}. Частичная корреляция не оценивалась ({reason})." if russian
+                          else f"{label}. Partial correlation not estimated ({reason}).")
+    if missing:
+        answer.append("Пропуск не означает измеренный ноль." if russian else
+                      "A blank estimate does not represent a measured zero.")
+        if row["gse113957_status"] != row["gse226189_status"]:
+            answer.append("Для парного анализа требовалось пройти отбор в обеих когортах." if russian else
+                          "The paired analysis required eligibility in both cohorts.")
+    return LocalAnswer("answered", " ".join(answer), cited, cited)
 
 
 def missing_model():
@@ -138,6 +206,8 @@ def answer_local(question, prior_questions=()):
         history = tuple(q[:MAX_PRIOR_CHARS] for q in prior_questions[-MAX_PRIOR_QUESTIONS:])
     try:
         passages = retrieve(question, history)
+        if result := phase7a_correlation_answer(question, russian, passages):
+            return result
     except OSError:
         return LocalAnswer("evidence_error", "Could not read the tracked research reports. Check your checkout.")
     if not passages:
