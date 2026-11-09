@@ -37,13 +37,15 @@ The framework-independent [Python interface](scripts/research_assistant.py) is `
 
 ### Local AI — Experimental
 
+The tested setup is an Apple M2 Mac with 8 GB of RAM, Python 3.11 and Ollama 0.40.15. Ollama requires macOS 14 or newer. Allow about 1.4 GB for the model download plus space for the app and Python environment. [Ollama system requirements](https://docs.ollama.com/macos) · [Model size](https://ollama.com/library/qwen3:1.7b)
+
 This mode searches five tracked reports and asks a local model to synthesize the retrieved excerpts. Install the macOS app in Applications, quit it if it is running, and start its bundled server in Terminal with cloud features disabled. [Download Ollama for macOS](https://ollama.com/download/mac) · [Ollama macOS setup](https://docs.ollama.com/macos)
 
 ```sh
 OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NO_CLOUD=1 /Applications/Ollama.app/Contents/Resources/ollama serve
 ```
 
-Leave that terminal open. In a second terminal, download the 1.7B model (about 1.4 GB) and check that Ollama lists it. [Ollama model page](https://ollama.com/library/qwen3:1.7b)
+Leave that terminal open. In a second terminal, download the model and check that Ollama lists it.
 
 ```sh
 /Applications/Ollama.app/Contents/Resources/ollama pull qwen3:1.7b
@@ -52,7 +54,9 @@ Leave that terminal open. In a second terminal, download the 1.7B model (about 1
 
 Launch Streamlit with the command above and select **Local AI — Experimental**. Try “Why are the Phase 7A partial correlations for TERT missing?” or “Что показал нокдаун SIRT6 в хондроцитах?” Expand **Retrieved evidence** to read the excerpts and open the exact report lines. The app shows up to six recent Local AI turns and uses up to two preceding questions for follow-ups. **Clear conversation** resets the session history.
 
-Treat generated prose as an experimental summary. The app checks citation IDs against the retrieved passages. Check the excerpts yourself for whether they support each claim. [Phase 8A manual evaluation and limitations](docs/phase8a_local_ai_evaluation.md)
+After installing the dependencies and downloading the model, inference and excerpt display work offline without an API key or paid service. Opening a published GitHub source link requires internet access.
+
+Treat generated prose as an experimental summary. The app checks citation IDs against the retrieved passages. Check the excerpts for whether they support each claim. All 81 automated tests passed. The release audit evaluated 20 questions through the local app, including 18 with model inference, and found scientific release blockers. [Release readiness and live results](docs/phase8a_release_readiness.md) · [Phase 8A manual evaluation](docs/phase8a_local_ai_evaluation.md)
 
 ## Research stages
 
